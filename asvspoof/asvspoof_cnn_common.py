@@ -397,6 +397,7 @@ def run_experiment(cfg):
         cfg["result_name"], "kfold_pooled",
         eer=_avg("eer")[0], balacc=_avg("balacc")[0],
         recall=_avg("recall")[0], auc=_avg("auc")[0], eer_std=_avg("eer")[1],
+        acc=_avg("acc")[0], precision=_avg("precision")[0], f1=_avg("f1")[0],
     )
 
     # ════════════════ 2) Standart protokol (train/dev/eval) ════════════════
@@ -417,14 +418,15 @@ def run_experiment(cfg):
         print("\n" + "=" * 60)
         print("   STANDART PROTOKOL — EVAL SETİ")
         print("=" * 60)
-        for key, lbl in [("acc", "Accuracy"), ("balacc", "Bal.Accuracy"), ("recall", "Recall"),
-                         ("auc", "AUC"), ("eer", "EER")]:
+        for key, lbl in [("acc", "Accuracy"), ("balacc", "Bal.Accuracy"), ("precision", "Precision"),
+                         ("recall", "Recall"), ("f1", "F1-Score"), ("auc", "AUC"), ("eer", "EER")]:
             print(f"  {lbl:<13}: {official[key]:.4f}")
         print("=" * 60)
         record_result(
             cfg["result_name"], "official_eval",
             eer=official["eer"], balacc=official["balacc"],
             recall=official["recall"], auc=official["auc"],
+            acc=official["acc"], precision=official["precision"], f1=official["f1"],
         )
         del model
         gc.collect()

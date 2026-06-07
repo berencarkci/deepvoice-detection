@@ -293,11 +293,16 @@ for name, official in [("Random Forest", rf_results), ("SVM", svm_results)]:
         recall=float(np.mean([r["Recall"] for r in rws])),
         auc=float(np.mean([r["AUC"] for r in rws])),
         eer_std=float(np.std([r["EER"] for r in rws])),
+        acc=float(np.mean([r["ACC"] for r in rws])),
+        precision=float(np.mean([r["Precision"] for r in rws])),
+        f1=float(np.mean([r["F1"] for r in rws])),
     )
     record_result(
         _name_map[name], "official_eval",
         eer=official["Eval EER"], balacc=official["Eval BalACC"],
         recall=official["Eval Recall"], auc=official["Eval AUC"],
+        acc=official["Eval ACC"], precision=official["Eval Precision"],
+        f1=official["Eval F1"],
     )
 
 # ─────────────────────────────────────────────
