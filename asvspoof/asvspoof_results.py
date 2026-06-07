@@ -13,8 +13,10 @@ import os
 import csv
 
 _DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CSV_PATH = os.path.join(_DIR, "asvspoof_results.csv")
-MD_PATH = os.path.join(_DIR, "asvspoof_results.md")
+_RESULTS_DIR = os.path.join(_DIR, "results")
+os.makedirs(_RESULTS_DIR, exist_ok=True)
+CSV_PATH = os.path.join(_RESULTS_DIR, "asvspoof_results.csv")
+MD_PATH = os.path.join(_RESULTS_DIR, "asvspoof_results.md")
 
 COLUMNS = ["method", "protocol", "EER", "EER_std", "BalACC", "Recall", "AUC"]
 _METHOD_ORDER = ["RF", "SVM", "Mel-CNN", "Spec-CNN"]

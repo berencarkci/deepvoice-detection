@@ -29,7 +29,7 @@ sınıf dengesizliği nedeniyle dengeli doğruluk ve AUC de raporlanır.
 | CNN (Mel) | 0.0063 | 0.0453 |
 | CNN (Spec) | 0.0041 | 0.1146 |
 
-Ayrıntılı tablolar: [`asvspoof_results.md`](asvspoof_results.md).
+Ayrıntılı tablolar: [`results/asvspoof_results.md`](results/asvspoof_results.md).
 
 ## Klasör yapısı
 
@@ -50,6 +50,7 @@ Ayrıntılı tablolar: [`asvspoof_results.md`](asvspoof_results.md).
 │   └── generate_groups.py
 ├── tools/                  # compare_all_models.py, test_features.py
 ├── experiments/            # Yan analizler
+├── results/                # Sonuç tabloları (.csv/.md)
 ├── figures/                # Üretilen grafikler
 ├── models/                 # Eğitilmiş modeller (yalnız arayüzün kullandıkları)
 ├── requirements.txt        # Eğitim/çıkarım bağımlılıkları

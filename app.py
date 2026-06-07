@@ -344,7 +344,7 @@ with tab2:
     """)
     st.caption("EER düşük = daha iyi. Standart protokol; train ile eğitim, eval ile test. "
                "GUI standart protokol modellerini kullanır.")
-    st.info("Detaylı tablo ve grafikler: asvspoof_results.md / asvspoof_results.csv")
+    st.info("Detaylı tablo ve grafikler: results/asvspoof_results.md / results/asvspoof_results.csv")
 
 with tab3:
     st.header("🧠 Sistem Nasıl Çalışır?")

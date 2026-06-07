@@ -18,7 +18,7 @@ ile birlikte raporlanır.
   asvspoof_train_ml.log
   models/asvspoof_random_forest_model.pkl (+scaler), models/asvspoof_svm_model.pkl (+scaler)
   asvspoof_ml_confusion_matrices.png, asvspoof_ml_roc_curves.png
-  asvspoof_ml_kfold_roc_confusion.png, asvspoof_ml_report.csv
+  asvspoof_ml_kfold_roc_confusion.png, results/asvspoof_ml_report.csv
 """
 
 import sys
@@ -266,8 +266,10 @@ print("     STANDART PROTOKOL — EVAL SETİ")
 print("=" * 80)
 print(df.to_string())
 print("=" * 80)
-df.to_csv(os.path.join(_BASE_DIR, "asvspoof_ml_report.csv"), index=True)
-print("✔ asvspoof_ml_report.csv kaydedildi.")
+_results_dir = os.path.join(_BASE_DIR, "results")
+os.makedirs(_results_dir, exist_ok=True)
+df.to_csv(os.path.join(_results_dir, "asvspoof_ml_report.csv"), index=True)
+print("✔ results/asvspoof_ml_report.csv kaydedildi.")
 
 official_eer = {"Random Forest": rf_results["Eval EER"], "SVM": svm_results["Eval EER"]}
 print("\n" + "=" * 70)

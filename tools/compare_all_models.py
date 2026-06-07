@@ -7,7 +7,7 @@
     seti üzerinde değerlendirmek ve sonuçları yan yana kıyaslamak.
 
   Üretilen Çıktılar:
-    1. comparison_report.csv         — Tüm metriklerin DataFrame tablosu
+    1. results/comparison_report.csv — Tüm metriklerin DataFrame tablosu
     2. comparison_confmats.png       — 2x2 confusion matrix gridi
     3. comparison_roc_curves.png     — Birleşik ROC eğrileri (4 model)
 
@@ -48,8 +48,11 @@ from sklearn.metrics import (
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-FIGURES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "figures")
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
+RESULTS_DIR = os.path.join(_BASE_DIR, "results")
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
 # ─────────────────────────────────────────────
 # 0. DONANIM
@@ -382,8 +385,8 @@ print(df.to_string())
 print("=" * 75)
 
 # CSV kaydı
-df.to_csv("comparison_report.csv", index=True)
-print("\n✓ comparison_report.csv kaydedildi.")
+df.to_csv(os.path.join(RESULTS_DIR, "comparison_report.csv"), index=True)
+print("\n✓ results/comparison_report.csv kaydedildi.")
 
 # ─────────────────────────────────────────────
 # 7. CONFUSION MATRIX GRİDİ
