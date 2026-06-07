@@ -25,6 +25,13 @@ Metrik = **EER** (düşük = daha iyi). Sınıf dengesizliği (~1:9) nedeniyle E
 | Mel-CNN | 0.0063 | 0.9968 | 0.9924 | 0.9801 | 0.9871 | 0.9836 | 0.9996 |
 | Spec-CNN | 0.0041 | 0.9971 | 0.9956 | 0.9780 | 0.9937 | 0.9857 | 0.9998 |
 
+### Standart protokol (dev / doğrulama)
+
+| Yöntem | EER | Accuracy | BalACC | Precision | Recall | F1 | AUC |
+|--------|-----|----------|--------|-----------|--------|----|-----|
+| RF | 0.1170 | 0.9142 | 0.5868 | 0.9370 | 0.1750 | 0.2950 | 0.9504 |
+| SVM | 0.0754 | 0.9539 | 0.7873 | 0.9546 | 0.5777 | 0.7198 | 0.9740 |
+
 ### Standart protokol (eval)
 
 | Yöntem | EER | Accuracy | BalACC | Precision | Recall | F1 | AUC |

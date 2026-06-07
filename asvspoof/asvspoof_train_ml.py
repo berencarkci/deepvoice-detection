@@ -18,7 +18,8 @@ ile birlikte raporlanır.
   asvspoof_train_ml.log
   models/asvspoof_random_forest_model.pkl (+scaler), models/asvspoof_svm_model.pkl (+scaler)
   asvspoof_ml_confusion_matrices.png, asvspoof_ml_roc_curves.png
-  asvspoof_ml_kfold_roc_confusion.png, results/asvspoof_ml_report.csv
+  asvspoof_ml_kfold_roc_confusion.png
+  results/asvspoof_results.csv (+md) — dev/eval/k-fold tam metrik tablosu
 """
 
 import sys
@@ -234,7 +235,10 @@ def train_and_evaluate(model_obj, model_name):
 
     return {
         "Model": model_name,
-        "Dev ACC": round(dev_m["ACC"], 4), "Dev EER": round(dev_m["EER"], 4),
+        "Dev ACC": round(dev_m["ACC"], 4), "Dev BalACC": round(dev_m["BalACC"], 4),
+        "Dev Precision": round(dev_m["Precision"], 4), "Dev Recall": round(dev_m["Recall"], 4),
+        "Dev F1": round(dev_m["F1"], 4), "Dev AUC": round(dev_m["AUC"], 4),
+        "Dev EER": round(dev_m["EER"], 4),
         "Eval ACC": round(eval_m["ACC"], 4), "Eval BalACC": round(eval_m["BalACC"], 4),
         "Eval Precision": round(eval_m["Precision"], 4), "Eval Recall": round(eval_m["Recall"], 4),
         "Eval F1": round(eval_m["F1"], 4), "Eval AUC": round(eval_m["AUC"], 4),
@@ -262,14 +266,10 @@ svm_results, svm_preds = train_and_evaluate(
 # ─────────────────────────────────────────────
 df = pd.DataFrame([rf_results, svm_results]).set_index("Model")
 print("\n" + "=" * 80)
-print("     STANDART PROTOKOL — EVAL SETİ")
+print("     STANDART PROTOKOL — DEV + EVAL")
 print("=" * 80)
 print(df.to_string())
 print("=" * 80)
-_results_dir = os.path.join(_BASE_DIR, "results")
-os.makedirs(_results_dir, exist_ok=True)
-df.to_csv(os.path.join(_results_dir, "asvspoof_ml_report.csv"), index=True)
-print("✔ results/asvspoof_ml_report.csv kaydedildi.")
 
 official_eer = {"Random Forest": rf_results["Eval EER"], "SVM": svm_results["Eval EER"]}
 print("\n" + "=" * 70)
@@ -296,6 +296,13 @@ for name, official in [("Random Forest", rf_results), ("SVM", svm_results)]:
         acc=float(np.mean([r["ACC"] for r in rws])),
         precision=float(np.mean([r["Precision"] for r in rws])),
         f1=float(np.mean([r["F1"] for r in rws])),
+    )
+    record_result(
+        _name_map[name], "official_dev",
+        eer=official["Dev EER"], balacc=official["Dev BalACC"],
+        recall=official["Dev Recall"], auc=official["Dev AUC"],
+        acc=official["Dev ACC"], precision=official["Dev Precision"],
+        f1=official["Dev F1"],
     )
     record_result(
         _name_map[name], "official_eval",

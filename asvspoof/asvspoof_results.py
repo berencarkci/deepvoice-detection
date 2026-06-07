@@ -21,8 +21,9 @@ MD_PATH = os.path.join(_RESULTS_DIR, "asvspoof_results.md")
 COLUMNS = ["method", "protocol", "EER", "EER_std", "ACC", "BalACC",
            "Precision", "Recall", "F1", "AUC"]
 _METHOD_ORDER = ["RF", "SVM", "Mel-CNN", "Spec-CNN"]
-_PROTO_ORDER = ["kfold_pooled", "official_eval"]
+_PROTO_ORDER = ["kfold_pooled", "official_dev", "official_eval"]
 _PROTO_LABEL = {"kfold_pooled": "Havuzlanmış 5-fold çapraz doğrulama",
+                "official_dev": "Standart protokol (dev / doğrulama)",
                 "official_eval": "Standart protokol (eval)"}
 
 
@@ -113,11 +114,14 @@ def _write_md(rows):
                  f"| {inflation(m)} |")
     L.append("")
     for proto in _PROTO_ORDER:
+        proto_methods = [m for m in methods if (m, proto) in rows]
+        if not proto_methods:
+            continue
         L.append(f"### {_PROTO_LABEL[proto]}")
         L.append("")
         L.append("| Yöntem | EER | Accuracy | BalACC | Precision | Recall | F1 | AUC |")
         L.append("|--------|-----|----------|--------|-----------|--------|----|-----|")
-        for m in methods:
+        for m in proto_methods:
             L.append(f"| {m} | {cell(m, proto, 'EER')} | {cell(m, proto, 'ACC')} "
                      f"| {cell(m, proto, 'BalACC')} | {cell(m, proto, 'Precision')} "
                      f"| {cell(m, proto, 'Recall')} | {cell(m, proto, 'F1')} "
