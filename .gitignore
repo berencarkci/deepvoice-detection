@@ -1,0 +1,47 @@
+# ============================================================
+#  Deepvoice-Detection — .gitignore
+#  Büyük/yeniden üretilebilir/gizli dosyalar repoya GİRMEZ.
+# ============================================================
+
+# --- Sanal ortam ---
+.venv/
+
+# --- Veri seti ve büyük arşivler (GB'larca; ayrı indirilir) ---
+Dataset/
+LA.zip
+PA.zip
+*.zip
+
+# --- Çıkarılan öznitelikler / etiketler / gruplar (yeniden üretilebilir, ~51 GB) ---
+*.npy
+
+# --- Modeller: yalnızca GUI'nin sunduğu ASVspoof modelleri repoda tutulur ---
+models/*
+!models/asvspoof_random_forest_model.pkl
+!models/asvspoof_random_forest_scaler.pkl
+!models/asvspoof_svm_model.pkl
+!models/asvspoof_svm_scaler.pkl
+!models/asvspoof_cnn_mel_official.pth
+!models/asvspoof_cnn_spec_official.pth
+!models/asvspoof_cnn_mel_official.norm.json
+!models/asvspoof_cnn_spec_official.norm.json
+
+# --- Python cache / matplotlib config ---
+__pycache__/
+*.pyc
+*.pyo
+.mplconfig/
+
+# --- Eğitim/çıkarım logları (sonuçlar asvspoof_results.md/.csv'de) ---
+*.log
+
+# --- IDE ---
+.vscode/
+*.code-workspace
+
+# --- Rapor PDF'leri (öğrenci fotoğrafı/iletişim bilgisi içerir — bilinçli hariç) ---
+*.pdf
+
+# --- Geçici dosyalar ---
+*.tmp
+*.bak

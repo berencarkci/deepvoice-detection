@@ -1,0 +1,9 @@
+method,protocol,EER,EER_std,BalACC,Recall,AUC
+RF,kfold_pooled,0.0902,0.0154,0.6767,0.3556,0.9700
+RF,official_eval,0.1437,,0.6197,0.2620,0.9238
+SVM,kfold_pooled,0.0454,0.0060,0.9265,0.8673,0.9906
+SVM,official_eval,0.1306,,0.8271,0.7264,0.9392
+Mel-CNN,kfold_pooled,0.0063,0.0029,0.9924,0.9871,0.9996
+Mel-CNN,official_eval,0.0453,,0.9535,0.9587,0.9920
+Spec-CNN,kfold_pooled,0.0041,0.0029,0.9956,0.9937,0.9998
+Spec-CNN,official_eval,0.1146,,0.9063,0.9886,0.9532

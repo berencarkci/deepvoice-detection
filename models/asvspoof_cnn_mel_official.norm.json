@@ -1,0 +1,16 @@
+{
+  "mean": -39.760872,
+  "std": 32.612064,
+  "model": "asvspoof_cnn_mel_official",
+  "dataset": "ASVspoof 2019 LA (official protocol)",
+  "feature": "mel",
+  "sr": 22050,
+  "duration": 5.0,
+  "hop_length": 512,
+  "n_mels": 128,
+  "n_fft": null,
+  "max_pad_len": 216,
+  "label_convention": "1=real/bonafide, 0=fake/spoof",
+  "official_eval_eer": 0.0453,
+  "note": "Z-score: (x - mean)/(std+1e-8). mean/std official train split'inin globalidir."
+}

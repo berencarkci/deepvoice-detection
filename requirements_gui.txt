@@ -1,0 +1,12 @@
+# DeepVoice GUI (Streamlit) — ek bağımlılıklar
+# Kurulum:
+#   source .venv/bin/activate
+#   pip install -r requirements_gui.txt
+#   streamlit run app.py
+#
+# NOT: numpy, scikit-learn, joblib, matplotlib, librosa, torch zaten ana
+# requirements.txt ile gelir. Buradakiler GUI'ye özgü eksik olanlardır.
+
+streamlit>=1.32
+soundfile>=0.12      # librosa'nın ses okuması için (flac/wav/mp3)
+librosa>=0.10

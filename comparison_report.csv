@@ -1,0 +1,5 @@
+Model,Accuracy,Precision,Recall,F1-Score,AUC,EER
+Random Forest,1.0,1.0,1.0,1.0,1.0,0.0
+SVM,1.0,1.0,1.0,1.0,1.0,0.0
+CNN-Mel,0.7816,0.6911,1.0,0.8173,0.8825,0.1903
+CNN-Spec,0.863,0.781,1.0,0.877,0.9688,0.0588
