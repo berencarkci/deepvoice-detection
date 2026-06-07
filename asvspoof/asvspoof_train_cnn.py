@@ -12,8 +12,8 @@ Girdi (asvspoof_extract_features.py --mel-only ile üretilir):
   asvspoof_cnn_mel_kfold_roc_confusion.png, asvspoof_cnn_mel_kfold_accuracy_bars.png
 
 Çalıştırma:
-  python asvspoof_train_cnn.py
-  ASV_SKIP_OFFICIAL=1 python asvspoof_train_cnn.py     # sadece k-fold
+  python asvspoof/asvspoof_train_cnn.py
+  ASV_SKIP_OFFICIAL=1 python asvspoof/asvspoof_train_cnn.py     # sadece k-fold
 """
 
 from asvspoof_cnn_common import run_experiment

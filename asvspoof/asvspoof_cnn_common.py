@@ -327,7 +327,7 @@ def run_experiment(cfg):
         gp = os.path.join(_BASE_DIR, f"{cfg['x_prefix']}_groups_{split}.npy")
         if not (os.path.exists(xp) and os.path.exists(yp) and os.path.exists(gp)):
             print(f"\n❌ Eksik dosya ({split}): {xp} / {yp} / {gp}")
-            print("   Önce: python asvspoof_extract_features.py "
+            print("   Önce: python asvspoof/asvspoof_extract_features.py "
                   f"--{'mel' if 'mel' in cfg['x_prefix'] else 'spec'}-only")
             sys.exit(1)
         xs.append(np.load(xp, mmap_mode="r"))

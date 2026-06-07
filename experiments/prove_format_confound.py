@@ -28,7 +28,7 @@ Bu script bunu 3 bağımsız deneyle ispatlar:
              → model formata yaslanıyor.
 
 Çalıştırma:
-    cd /home/bero/Projects/Deepvoice-Detection
+    cd <proje-dizini>
     .venv/bin/python experiments/prove_format_confound.py
 """
 

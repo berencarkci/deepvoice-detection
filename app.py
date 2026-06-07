@@ -2,7 +2,7 @@
 DeepVoice Tespit Sistemi — Streamlit GUI (ASVspoof 2019 LA modelleriyle)
 
 Çalıştırma:
-    cd /home/bero/Projects/Deepvoice-Detection
+    cd <proje-dizini>
     source .venv/bin/activate
     pip install -r requirements_gui.txt      # ilk sefer (streamlit + soundfile)
     streamlit run app.py

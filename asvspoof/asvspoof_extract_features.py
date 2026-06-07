@@ -25,11 +25,11 @@ NOTLAR:
     doğrudan memory-mapped (.npy) olarak yazılır — RAM'i doldurmaz.
 
 Kullanım:
-  python asvspoof_extract_features.py                # ml + mel + spec
-  python asvspoof_extract_features.py --ml-only      # sadece MFCC (hızlı, ~küçük)
-  python asvspoof_extract_features.py --mel-only     # sadece Mel
-  python asvspoof_extract_features.py --spec-only    # sadece Standart Spektrogram
-  python asvspoof_extract_features.py --cnn-only     # mel + spec (ML yok)
+  python asvspoof/asvspoof_extract_features.py                # ml + mel + spec
+  python asvspoof/asvspoof_extract_features.py --ml-only      # sadece MFCC (hızlı, ~küçük)
+  python asvspoof/asvspoof_extract_features.py --mel-only     # sadece Mel
+  python asvspoof/asvspoof_extract_features.py --spec-only    # sadece Standart Spektrogram
+  python asvspoof/asvspoof_extract_features.py --cnn-only     # mel + spec (ML yok)
 """
 
 import os
