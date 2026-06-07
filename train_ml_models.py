@@ -13,6 +13,8 @@ import atexit
 import os
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
+os.makedirs(FIGURES_DIR, exist_ok=True)
 _MPL_DIR = os.path.join(_BASE_DIR, ".mplconfig")
 os.makedirs(_MPL_DIR, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", _MPL_DIR)
@@ -282,7 +284,7 @@ try:
     axes[1].set_title("SVM (Tüm K-Fold Sonuçları)")
 
     plt.tight_layout()
-    _cm_path = os.path.join(_BASE_DIR, "ml_kfold_confusion_matrices.png")
+    _cm_path = os.path.join(FIGURES_DIR, "ml_kfold_confusion_matrices.png")
     plt.savefig(_cm_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"\nKarmaşıklık matrisi grafiği kaydedildi: {_cm_path}")

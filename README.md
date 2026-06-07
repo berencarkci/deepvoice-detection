@@ -42,9 +42,11 @@ Ayrıntılı tablolar: [`asvspoof_results.md`](asvspoof_results.md).
 ├── asvspoof_train_spectrogram_cnn.py  # Standart spektrogram CNN
 ├── asvspoof_cnn_common.py          # CNN ortak altyapısı
 ├── asvspoof_results.py             # Sonuç kayıt/özet modülü
+├── download_datasets.py            # Veri setlerini indirir ve düzenler
 ├── extract_*_features.py           # FoR öznitelik çıkarımı
 ├── train_*.py                      # FoR eğitim scriptleri
 ├── experiments/                    # Yan analizler
+├── figures/                        # Üretilen grafikler
 ├── models/                         # Eğitilmiş modeller (yalnız arayüzün kullandıkları)
 ├── requirements.txt                # Eğitim/çıkarım bağımlılıkları
 └── requirements_gui.txt            # Arayüz bağımlılıkları
@@ -63,9 +65,17 @@ pip install -r requirements.txt
 
 ## Veri setleri
 
+Veri setleri depoya dâhil değildir. İndirme betiği doğru klasör yapısını kurar:
+
+```bash
+python download_datasets.py all        # veya: asvspoof / for
+```
+
 - **ASVspoof 2019 LA:** [Edinburgh DataShare](https://datashare.ed.ac.uk/handle/10283/3336)
-  (`LA.zip`). Açıldıktan sonra `Dataset/ASVspoof2019_LA/` altına yerleştirilir.
-- **The Fake-or-Real (FoR):** `Dataset/for-original/` altına yerleştirilir.
+  üzerinden doğrudan indirilir → `Dataset/ASVspoof2019_LA/`.
+- **The Fake-or-Real (FoR):** Kaggle aynası üzerinden indirilir (`kaggle` aracı + API
+  anahtarı gerekir) → `Dataset/for-original/`. Kaynak:
+  [York Üniversitesi BIL](https://bil.eecs.yorku.ca/datasets/).
 
 ## Çalıştırma
 

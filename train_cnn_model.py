@@ -4,6 +4,8 @@ import gc
 import os
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
+os.makedirs(FIGURES_DIR, exist_ok=True)
 _MPL_DIR = os.path.join(_BASE_DIR, ".mplconfig")
 os.makedirs(_MPL_DIR, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", _MPL_DIR)
@@ -455,7 +457,7 @@ try:
     axes[1].set_title("Confusion Matrix (Tüm K-Fold Sonuçları)")
 
     plt.tight_layout()
-    _roc_cm_path = os.path.join(_BASE_DIR, "cnn_mel_kfold_roc_confusion.png")
+    _roc_cm_path = os.path.join(FIGURES_DIR, "cnn_mel_kfold_roc_confusion.png")
     plt.savefig(_roc_cm_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"\nROC + karmaşıklık matrisi kaydedildi: {_roc_cm_path}")
@@ -473,7 +475,7 @@ try:
     ax_b.grid(True, axis="y", alpha=0.3)
     plt.tight_layout()
     
-    _bar_path = os.path.join(_BASE_DIR, "cnn_mel_kfold_accuracy_bars.png")
+    _bar_path = os.path.join(FIGURES_DIR, "cnn_mel_kfold_accuracy_bars.png")
     plt.savefig(_bar_path, dpi=150, bbox_inches="tight")
     plt.close(fig_b)
     print(f"Fold doğruluk çubukları kaydedildi: {_bar_path}")

@@ -81,6 +81,8 @@ from sklearn.metrics import (
 
 MODELS_DIR = os.path.join(_BASE_DIR, "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
+FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
+os.makedirs(FIGURES_DIR, exist_ok=True)
 K_FOLDS = 5
 SPLITS = ["train", "dev", "eval"]
 
@@ -312,7 +314,7 @@ try:
         ax.set_title(f"{name}\nACC: {accuracy_score(y_t, y_p)*100:.2f}% | "
                      f"BalACC: {balanced_accuracy_score(y_t, y_p)*100:.2f}%")
     plt.tight_layout()
-    p = os.path.join(_BASE_DIR, "asvspoof_ml_confusion_matrices.png")
+    p = os.path.join(FIGURES_DIR, "asvspoof_ml_confusion_matrices.png")
     plt.savefig(p, dpi=150, bbox_inches="tight"); plt.close(fig)
     print(f"✔ {p}")
 
@@ -328,7 +330,7 @@ try:
     ax.set_title("ASVspoof 2019 LA — ROC (Resmî Protokol, Eval)", fontsize=13, fontweight="bold")
     ax.legend(loc="lower right"); ax.grid(True, alpha=0.3)
     plt.tight_layout()
-    p = os.path.join(_BASE_DIR, "asvspoof_ml_roc_curves.png")
+    p = os.path.join(FIGURES_DIR, "asvspoof_ml_roc_curves.png")
     plt.savefig(p, dpi=150, bbox_inches="tight"); plt.close(fig)
     print(f"✔ {p}")
 
@@ -354,7 +356,7 @@ try:
             cmap=cmap, ax=ax, colorbar=False)
         ax.set_title(f"{name} Confusion (OOF)")
     plt.tight_layout()
-    p = os.path.join(_BASE_DIR, "asvspoof_ml_kfold_roc_confusion.png")
+    p = os.path.join(FIGURES_DIR, "asvspoof_ml_kfold_roc_confusion.png")
     plt.savefig(p, dpi=150, bbox_inches="tight"); plt.close(fig)
     print(f"✔ {p}")
 

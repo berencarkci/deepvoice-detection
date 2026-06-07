@@ -45,6 +45,8 @@ from asvspoof_results import record_result
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(_BASE_DIR, "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
+FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
+os.makedirs(FIGURES_DIR, exist_ok=True)
 
 K_FOLDS = 5
 SPLITS = ["train", "dev", "eval"]
@@ -471,7 +473,7 @@ def _save_plots(cfg, Y, oof_probs, oof_preds, fold_metrics):
             cmap=plt.cm.Purples, ax=axes[1], colorbar=False)
         axes[1].set_title("Confusion Matrix (Tüm K-Fold OOF)")
         plt.tight_layout()
-        p1 = os.path.join(_BASE_DIR, f"{cfg['plot_prefix']}_roc_confusion.png")
+        p1 = os.path.join(FIGURES_DIR, f"{cfg['plot_prefix']}_roc_confusion.png")
         plt.savefig(p1, dpi=150, bbox_inches="tight"); plt.close(fig)
         print(f"\nGrafik kaydedildi: {p1}")
 
@@ -485,7 +487,7 @@ def _save_plots(cfg, Y, oof_probs, oof_preds, fold_metrics):
         ax_b.set_title(f"{cfg['title']} — Fold bazlı Accuracy / EER")
         ax_b.legend(); ax_b.grid(True, axis="y", alpha=0.3)
         plt.tight_layout()
-        p2 = os.path.join(_BASE_DIR, f"{cfg['plot_prefix']}_accuracy_bars.png")
+        p2 = os.path.join(FIGURES_DIR, f"{cfg['plot_prefix']}_accuracy_bars.png")
         plt.savefig(p2, dpi=150, bbox_inches="tight"); plt.close(fig_b)
         print(f"Grafik kaydedildi: {p2}")
     except Exception as e:

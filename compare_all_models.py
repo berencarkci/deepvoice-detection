@@ -48,6 +48,9 @@ from sklearn.metrics import (
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
+FIGURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "figures")
+os.makedirs(FIGURES_DIR, exist_ok=True)
+
 # ─────────────────────────────────────────────
 # 0. DONANIM
 # ─────────────────────────────────────────────
@@ -408,9 +411,9 @@ for ax in axes[n_models:]:
 fig.suptitle("Tüm Modeller — Confusion Matrix Karşılaştırması",
              fontsize=14, fontweight="bold")
 plt.tight_layout()
-plt.savefig("comparison_confmats.png", dpi=150, bbox_inches="tight")
+plt.savefig(os.path.join(FIGURES_DIR, "comparison_confmats.png"), dpi=150, bbox_inches="tight")
 plt.show()
-print("✓ comparison_confmats.png kaydedildi.")
+print("✓ figures/comparison_confmats.png kaydedildi.")
 
 # ─────────────────────────────────────────────
 # 8. BİRLEŞİK ROC EĞRİSİ
@@ -432,9 +435,9 @@ plt.title("Birleşik ROC Eğrileri — Tüm Modeller", fontsize=13, fontweight="
 plt.legend(loc="lower right", fontsize=10)
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig("comparison_roc_curves.png", dpi=150, bbox_inches="tight")
+plt.savefig(os.path.join(FIGURES_DIR, "comparison_roc_curves.png"), dpi=150, bbox_inches="tight")
 plt.show()
-print("✓ comparison_roc_curves.png kaydedildi.")
+print("✓ figures/comparison_roc_curves.png kaydedildi.")
 
 # ─────────────────────────────────────────────
 # 9. EN İYİ MODELİ BELİRLE (F1 ve EER üzerinden)
