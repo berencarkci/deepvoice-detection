@@ -48,7 +48,7 @@ from sklearn.metrics import (
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-FIGURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "figures")
+FIGURES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
 # ─────────────────────────────────────────────

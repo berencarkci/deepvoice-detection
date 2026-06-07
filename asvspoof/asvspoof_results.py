@@ -12,7 +12,7 @@ protocol: "kfold_pooled" (havuzlanmış 5-fold) | "official_eval" (standart prot
 import os
 import csv
 
-_DIR = os.path.dirname(os.path.abspath(__file__))
+_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(_DIR, "asvspoof_results.csv")
 MD_PATH = os.path.join(_DIR, "asvspoof_results.md")
 

@@ -42,7 +42,7 @@ from tqdm import tqdm
 # ─────────────────────────────────────────────
 # YAPILANDIRMA  (ses okuma ve öznitelik çıkarım parametreleri)
 # ─────────────────────────────────────────────
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASV_DIR = os.path.join(_BASE_DIR, "Dataset", "ASVspoof2019_LA")
 
 SPLITS = {

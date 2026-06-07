@@ -1,16 +1,31 @@
+"""
+=============================================================================
+  DeepVoice / Deepfake Ses Tespiti — Standart Spektrogram K-Fold Eğitim
+=============================================================================
+  Amaç:
+    Şartnamede belirtilen "standart Spektrogram" özniteliği üzerinde
+    CNN modeli eğiterek Mel-Spektrogram tabanlı modelle karşılaştırma yapmak.
+    * K-Fold (k=5) İç İçe (Nested) Cross-Validation eklenmiştir.
+    * Tüm veri (Train+Val+Test) birleştirilip fold'larda %80 (Train+Val) 
+      ve %20 (Test) olarak ayrılır.
+    * Normalizasyon istatistikleri sızıntıyı önlemek için SADECE o fold'un 
+      Train setinden hesaplanır.
+=============================================================================
+"""
+
 import sys
 import atexit
 import gc
 import os
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 _MPL_DIR = os.path.join(_BASE_DIR, ".mplconfig")
 os.makedirs(_MPL_DIR, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", _MPL_DIR)
 
-# GUI backend hatası (Tk/Qt yok) önlenir — grafikler dosyaya yazılır
+# GUI backend hatası önlenir — grafikler dosyaya yazılır
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -33,8 +48,8 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import GroupKFold, GroupShuffleSplit
 
-# ── Terminal + dosya: her çalıştırmada train_cnn_mel.log güncellenir ──────────
-LOG_FILE = os.path.join(_BASE_DIR, "train_cnn_mel.log")
+# ── Terminal + dosya: her çalıştırmada train_cnn_spec.log güncellenir ──────────
+LOG_FILE = os.path.join(_BASE_DIR, "train_cnn_spec.log")
 
 class _TeeIO:
     """stdout'u konsola ve log dosyasına çift yazar."""
@@ -60,16 +75,19 @@ _orig_stdout = sys.stdout
 _log_fp = open(LOG_FILE, "w", encoding="utf-8")
 sys.stdout = _TeeIO(_orig_stdout, _log_fp)
 
-def _close_mel_training_log():
+def _close_spec_training_log():
     sys.stdout = _orig_stdout
     try:
         _log_fp.close()
     except Exception:
         pass
 
-atexit.register(_close_mel_training_log)
+atexit.register(_close_spec_training_log)
 
 def compute_eer(y_true, y_score):
+    """
+    Equal Error Rate (EER) — ASVspoof literatürü standardı.
+    """
     fpr, tpr, _ = roc_curve(y_true, y_score)
     try:
         eer = brentq(lambda x: 1.0 - x - interp1d(fpr, tpr)(x), 0.0, 1.0)
@@ -91,22 +109,80 @@ MODELS_DIR = "models"
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 # ─────────────────────────────────────────────
-# 1. TÜM VERİLERİ YÜKLEME VE BİRLEŞTİRME
+# MmapConcatArray ve Yardımcı Fonksiyonlar (RAM Optimizasyonu)
 # ─────────────────────────────────────────────
-print("\nTüm veriler (Train + Val + Test) yüklenip birleştiriliyor...")
-x1 = np.load("ECF0-x_training_mel.npy").astype(np.float32)
-y1 = np.load("ECF0-y_training_mel.npy").astype(np.float32)
+class MmapConcatArray:
+    """Birden fazla disk üzerindeki memory-mapped diziyi tek bir sanal dizi gibi birleştirir."""
+    def __init__(self, arrays):
+        self.arrays = arrays
+        self.lengths = [len(a) for a in arrays]
+        self.cumulative_lengths = np.cumsum(self.lengths)
+        self.shape = (sum(self.lengths),) + arrays[0].shape[1:]
+        self.dtype = arrays[0].dtype
 
-x2 = np.load("ECF1-x_validation_mel.npy").astype(np.float32)
-y2 = np.load("ECF1-y_validation_mel.npy").astype(np.float32)
+    def __len__(self):
+        return self.shape[0]
 
-x3 = np.load("ECF2-x_testing_mel.npy").astype(np.float32)
-y3 = np.load("ECF2-y_testing_mel.npy").astype(np.float32)
+    def __getitem__(self, idx):
+        if isinstance(idx, (int, np.integer)):
+            if idx < 0:
+                idx += len(self)
+            arr_idx = np.searchsorted(self.cumulative_lengths, idx, side='right')
+            if arr_idx == 0:
+                local_idx = idx
+            else:
+                local_idx = idx - self.cumulative_lengths[arr_idx - 1]
+            return self.arrays[arr_idx][local_idx]
+        elif isinstance(idx, (list, np.ndarray, slice)):
+            if isinstance(idx, slice):
+                start, stop, step = idx.indices(len(self))
+                idx = np.arange(start, stop, step)
+            return np.array([self[i] for i in idx], dtype=self.dtype)
+        else:
+            raise TypeError(f"Unsupported index type: {type(idx)}")
 
-X_TOTAL = np.concatenate((x1, x2, x3), axis=0)
+def compute_exact_mean_std_mmap(x_total, indices, chunk_size=2000):
+    """Büyük mmap dizilerinde RAM'i doldurmadan ortalama ve std hesaplar."""
+    total_sum = 0.0
+    total_count = 0
+    
+    # First pass: mean
+    for i in range(0, len(indices), chunk_size):
+        chunk_indices = indices[i:i+chunk_size]
+        chunk_data = x_total[chunk_indices]
+        total_sum += chunk_data.sum()
+        total_count += chunk_data.size
+        
+    mean = total_sum / total_count
+    
+    # Second pass: std
+    total_sq_diff = 0.0
+    for i in range(0, len(indices), chunk_size):
+        chunk_indices = indices[i:i+chunk_size]
+        chunk_data = x_total[chunk_indices]
+        total_sq_diff += ((chunk_data - mean) ** 2).sum()
+        
+    std = np.sqrt(total_sq_diff / total_count)
+    return float(mean), float(std)
+
+# ─────────────────────────────────────────────
+# 1. TÜM VERİ YÜKLEME VE BİRLEŞTİRME
+# ─────────────────────────────────────────────
+print("\nStandart Spektrogram tüm verileri (Train + Val + Test) mmap moduyla diskten yükleniyor...")
+x1 = np.load("ESF0-x_training_spec.npy", mmap_mode="r")
+y1 = np.load("ESF0-y_training_spec.npy").astype(np.float32)
+
+x2 = np.load("ESF1-x_validation_spec.npy", mmap_mode="r")
+y2 = np.load("ESF1-y_validation_spec.npy").astype(np.float32)
+
+x3 = np.load("ESF2-x_testing_spec.npy", mmap_mode="r")
+y3 = np.load("ESF2-y_testing_spec.npy").astype(np.float32)
+
+X_TOTAL = MmapConcatArray([x1, x2, x3])
 Y_TOTAL = np.concatenate((y1, y2, y3), axis=0)
 
-del x1, y1, x2, y2, x3, y3  # RAM temizliği
+del y1, y2, y3
+gc.collect()
 
 groups1 = np.load("EMF_groups_training.npy")
 groups2 = np.load("EMF_groups_validation.npy")
@@ -116,13 +192,15 @@ GROUPS_TOTAL = np.concatenate((groups1, groups2, groups3), axis=0)
 print(f"Toplam Birleşik Veri Seti Boyutu: {X_TOTAL.shape[0]} örnek")
 
 # ─────────────────────────────────────────────
-# 2. DATASET SINIFI (Array Tabanlı)
+# 2. DATASET — Global Z-Score + SpecAugment (Indis Tabanlı)
 # ─────────────────────────────────────────────
-class MelSpectrogramDataset(Dataset):
-    def __init__(self, x_data, y_data, mean: float, std: float,
-                 augment: bool = False, freq_mask_param: int = 20, time_mask_param: int = 40):
-        self.x = np.asarray(x_data, dtype=np.float32)
-        self.y = np.asarray(y_data, dtype=np.float32)
+class SpectrogramDataset(Dataset):
+    """x_data ve y_data'yı doğrudan kopyalamadan indis tabanlı olarak erişir."""
+    def __init__(self, x_data, y_data, indices, mean: float, std: float,
+                 augment: bool = False, freq_mask_param: int = 30, time_mask_param: int = 40):
+        self.x = x_data
+        self.y = y_data
+        self.indices = np.asarray(indices)
         self.mean = mean
         self.std = std
         self.augment = augment
@@ -130,12 +208,12 @@ class MelSpectrogramDataset(Dataset):
         self.time_mask_param = time_mask_param
 
     def __len__(self):
-        return len(self.x)
+        return len(self.indices)
 
     def _apply_spec_augment(self, x: torch.Tensor) -> torch.Tensor:
-        _, n_mels, time_steps = x.shape
+        _, n_freq, time_steps = x.shape
         f = np.random.randint(0, self.freq_mask_param + 1)
-        f0 = np.random.randint(0, max(1, n_mels - f))
+        f0 = np.random.randint(0, max(1, n_freq - f))
         x[:, f0:f0 + f, :] = 0.0
 
         t = np.random.randint(0, self.time_mask_param + 1)
@@ -144,18 +222,20 @@ class MelSpectrogramDataset(Dataset):
         return x
 
     def __getitem__(self, idx):
-        row = self.x[idx]
+        actual_idx = self.indices[idx]
+        row = self.x[actual_idx]
         if not row.flags.c_contiguous:
             row = np.ascontiguousarray(row)
+        row = row.astype(np.float32)
         x_val = torch.from_numpy(row).unsqueeze(0)
         x_val = (x_val - self.mean) / (self.std + 1e-8)
         if self.augment:
             x_val = self._apply_spec_augment(x_val)
-        y_val = torch.tensor([float(self.y[idx])], dtype=torch.float32)
+        y_val = torch.tensor([float(self.y[actual_idx])], dtype=torch.float32)
         return x_val, y_val
 
 # ─────────────────────────────────────────────
-# 3. MİMARİ
+# 3. MİMARİ — Mel-Spektrogram CNN ile Bire Bir Aynı
 # ─────────────────────────────────────────────
 class ResBlock(nn.Module):
     def __init__(self, channels: int):
@@ -190,7 +270,7 @@ class DeepVoiceCNN(nn.Module):
             nn.Linear(256 * 4 * 9, 256),
             nn.LeakyReLU(negative_slope=0.1, inplace=True),
             nn.Dropout(dropout_rate + 0.1),
-            nn.Linear(256, 1)
+            nn.Linear(256, 1),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -206,11 +286,11 @@ class DeepVoiceCNN(nn.Module):
 K_FOLDS = 5
 EPOCHS = 50
 _default_bs = 64 if device.type == "cuda" else 32
-BATCH_SIZE = int(os.environ.get("DEEPVOICE_MEL_BATCH_SIZE", str(_default_bs)))
+BATCH_SIZE = int(os.environ.get("DEEPVOICE_SPEC_BATCH_SIZE", str(_default_bs)))
 PATIENCE = 10
 _pin = device.type == "cuda"
 
-print(f"Batch boyutu: {BATCH_SIZE} (DEEPVOICE_MEL_BATCH_SIZE ile değiştirilebilir)")
+print(f"Batch boyutu: {BATCH_SIZE} (DEEPVOICE_SPEC_BATCH_SIZE ile değiştirilebilir)")
 
 kfold = GroupKFold(n_splits=K_FOLDS)
 
@@ -229,32 +309,27 @@ print("=" * 65)
 for fold, (train_val_idx, test_idx) in enumerate(kfold.split(X_TOTAL, Y_TOTAL, groups=GROUPS_TOTAL)):
     print(f"\n--- FOLD {fold + 1}/{K_FOLDS} ---")
     
-    # 1. Adım: Tüm verinin %20'si bu fold için TEST setidir.
-    X_test_fold, Y_test_fold = X_TOTAL[test_idx], Y_TOTAL[test_idx]
-    
-    # Geriye kalan 4 parça (%80) Train+Val havuzudur.
-    X_train_val, Y_train_val = X_TOTAL[train_val_idx], Y_TOTAL[train_val_idx]
+    # train_test_split işlemini büyük veriler üzerinde değil, indisler üzerinde yapıyoruz!
+    train_val_idx = np.asarray(train_val_idx)
+    test_idx = np.asarray(test_idx)
     groups_train_val = GROUPS_TOTAL[train_val_idx]
     
-    # 2. Adım: Kalan kısmı %80 Train, %20 Validation olarak böl
     gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-    train_idx, val_idx = next(gss.split(X_train_val, Y_train_val, groups=groups_train_val))
+    train_idx, val_idx = next(gss.split(train_val_idx, Y_TOTAL[train_val_idx], groups=groups_train_val))
+    train_idx = train_val_idx[train_idx]
+    val_idx = train_val_idx[val_idx]
     
-    X_train_fold = X_train_val[train_idx]
-    Y_train_fold = Y_train_val[train_idx]
-    X_val_fold   = X_train_val[val_idx]
-    Y_val_fold   = Y_train_val[val_idx]
+    print(f"Veri Dağılımı -> Train: {len(train_idx)}, Val: {len(val_idx)}, Test: {len(test_idx)}")
     
-    print(f"Veri Dağılımı -> Train: {len(X_train_fold)}, Val: {len(X_val_fold)}, Test: {len(X_test_fold)}")
+    # 3. Global Mean/Std Hesabı (SADECE Train fold verisinden, bellek dostu)
+    print("  Fold normalizasyon istatistikleri hesaplanıyor...")
+    fold_mean, fold_std = compute_exact_mean_std_mmap(X_TOTAL, train_idx)
+    print(f"  Fold Normalizasyon İstatistikleri -> Mean: {fold_mean:.4f}, Std: {fold_std:.4f}")
     
-    # 3. Global Mean/Std Hesabı (SADECE Train fold verisinden)
-    fold_mean = float(X_train_fold.mean())
-    fold_std  = float(X_train_fold.std())
-    
-    # 4. Dataset ve DataLoader Oluştur
-    train_dataset = MelSpectrogramDataset(X_train_fold, Y_train_fold, mean=fold_mean, std=fold_std, augment=True)
-    val_dataset   = MelSpectrogramDataset(X_val_fold, Y_val_fold, mean=fold_mean, std=fold_std, augment=False)
-    test_dataset  = MelSpectrogramDataset(X_test_fold, Y_test_fold, mean=fold_mean, std=fold_std, augment=False)
+    # 4. Dataset ve DataLoader Oluştur (Indisler ile)
+    train_dataset = SpectrogramDataset(X_TOTAL, Y_TOTAL, train_idx, mean=fold_mean, std=fold_std, augment=True)
+    val_dataset   = SpectrogramDataset(X_TOTAL, Y_TOTAL, val_idx, mean=fold_mean, std=fold_std, augment=False)
+    test_dataset  = SpectrogramDataset(X_TOTAL, Y_TOTAL, test_idx, mean=fold_mean, std=fold_std, augment=False)
     
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0, pin_memory=_pin)
     val_loader   = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0, pin_memory=_pin)
@@ -268,7 +343,7 @@ for fold, (train_val_idx, test_idx) in enumerate(kfold.split(X_TOTAL, Y_TOTAL, g
     
     best_val_loss = float("inf")
     patience_counter = 0
-    best_model_path = os.path.join(MODELS_DIR, f"deepvoice_cnn_mel_fold{fold+1}_best.pth")
+    best_model_path = os.path.join(MODELS_DIR, f"deepvoice_spec_cnn_fold{fold+1}_best.pth")
     
     # 6. Eğitim Döngüsü
     for epoch in range(1, EPOCHS + 1):
@@ -296,7 +371,6 @@ for fold, (train_val_idx, test_idx) in enumerate(kfold.split(X_TOTAL, Y_TOTAL, g
         avg_val_loss = val_loss / len(val_loader)
         scheduler.step()
         
-        # Early Stopping
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             patience_counter = 0
@@ -346,7 +420,6 @@ for fold, (train_val_idx, test_idx) in enumerate(kfold.split(X_TOTAL, Y_TOTAL, g
 
     del train_dataset, val_dataset, test_dataset
     del train_loader, val_loader, test_loader
-    del X_train_fold, X_val_fold, X_test_fold
     gc.collect()
     if device.type == "cuda":
         torch.cuda.empty_cache()
@@ -356,18 +429,18 @@ for fold, (train_val_idx, test_idx) in enumerate(kfold.split(X_TOTAL, Y_TOTAL, g
 # ─────────────────────────────────────────────
 print("\n" + "-" * 65)
 print("Nihai CNN modeli eğitiliyor (Tüm veri havuzunun %90'ı Train, %10'u Val)...")
+total_indices = np.arange(len(X_TOTAL))
 gss_final = GroupShuffleSplit(n_splits=1, test_size=0.1, random_state=42)
-final_train_idx, final_val_idx = next(gss_final.split(X_TOTAL, Y_TOTAL, groups=GROUPS_TOTAL))
-X_final_train = X_TOTAL[final_train_idx]
-Y_final_train = Y_TOTAL[final_train_idx]
-X_final_val   = X_TOTAL[final_val_idx]
-Y_final_val   = Y_TOTAL[final_val_idx]
+train_idx_rel, val_idx_rel = next(gss_final.split(total_indices, Y_TOTAL, groups=GROUPS_TOTAL))
+final_train_idx = total_indices[train_idx_rel]
+final_val_idx = total_indices[val_idx_rel]
 
-final_mean = float(X_final_train.mean())
-final_std  = float(X_final_train.std())
+print("  Final normalizasyon istatistikleri hesaplanıyor...")
+final_mean, final_std = compute_exact_mean_std_mmap(X_TOTAL, final_train_idx)
+print(f"  Final Normalizasyon İstatistikleri -> Mean: {final_mean:.4f}, Std: {final_std:.4f}")
 
-final_train_dataset = MelSpectrogramDataset(X_final_train, Y_final_train, mean=final_mean, std=final_std, augment=True)
-final_val_dataset   = MelSpectrogramDataset(X_final_val, Y_final_val, mean=final_mean, std=final_std, augment=False)
+final_train_dataset = SpectrogramDataset(X_TOTAL, Y_TOTAL, final_train_idx, mean=final_mean, std=final_std, augment=True)
+final_val_dataset   = SpectrogramDataset(X_TOTAL, Y_TOTAL, final_val_idx, mean=final_mean, std=final_std, augment=False)
 
 final_train_loader = DataLoader(final_train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0, pin_memory=_pin)
 final_val_loader   = DataLoader(final_val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0, pin_memory=_pin)
@@ -379,7 +452,7 @@ scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS, eta_mi
 
 best_final_val_loss = float("inf")
 patience_counter = 0
-final_model_path = os.path.join(MODELS_DIR, "deepvoice_cnn_mel_final.pth")
+final_model_path = os.path.join(MODELS_DIR, "deepvoice_cnn_spec_final.pth")
 
 for epoch in range(1, EPOCHS + 1):
     final_model.train()
@@ -428,7 +501,7 @@ print("=" * 55)
 try:
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     fig.suptitle(
-        f"CNN-Mel K-Fold — Tüm Veriseti Çapraz Doğrulama Özeti",
+        f"CNN-Spec K-Fold — Tüm Veriseti Çapraz Doğrulama Özeti",
         fontsize=12,
         fontweight="bold",
     )
@@ -450,14 +523,14 @@ try:
         Y_TOTAL,
         oof_preds,
         display_labels=["Sahte (0)", "Gerçek (1)"],
-        cmap=plt.cm.Purples,
+        cmap=plt.cm.Greens,
         ax=axes[1],
         colorbar=False,
     )
     axes[1].set_title("Confusion Matrix (Tüm K-Fold Sonuçları)")
 
     plt.tight_layout()
-    _roc_cm_path = os.path.join(FIGURES_DIR, "cnn_mel_kfold_roc_confusion.png")
+    _roc_cm_path = os.path.join(FIGURES_DIR, "cnn_spec_kfold_roc_confusion.png")
     plt.savefig(_roc_cm_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"\nROC + karmaşıklık matrisi kaydedildi: {_roc_cm_path}")
@@ -470,12 +543,12 @@ try:
     ax_b.set_xticks(xs)
     ax_b.set_xlabel("Fold")
     ax_b.set_ylabel("Test Accuracy (fold modeli)")
-    ax_b.set_title("CNN-Mel K-Fold — Fold bazlı test doğruluğu")
+    ax_b.set_title("CNN-Spec K-Fold — Fold bazlı test doğruluğu")
     ax_b.legend()
     ax_b.grid(True, axis="y", alpha=0.3)
     plt.tight_layout()
     
-    _bar_path = os.path.join(FIGURES_DIR, "cnn_mel_kfold_accuracy_bars.png")
+    _bar_path = os.path.join(FIGURES_DIR, "cnn_spec_kfold_accuracy_bars.png")
     plt.savefig(_bar_path, dpi=150, bbox_inches="tight")
     plt.close(fig_b)
     print(f"Fold doğruluk çubukları kaydedildi: {_bar_path}")

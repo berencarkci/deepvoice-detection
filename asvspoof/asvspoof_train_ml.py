@@ -25,7 +25,7 @@ import sys
 import atexit
 import os
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _MPL_DIR = os.path.join(_BASE_DIR, ".mplconfig")
 os.makedirs(_MPL_DIR, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", _MPL_DIR)

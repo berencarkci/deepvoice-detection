@@ -35,25 +35,29 @@ Ayrıntılı tablolar: [`asvspoof_results.md`](asvspoof_results.md).
 
 ```
 .
-├── app.py                          # Streamlit arayüzü (ses yükle → tahmin)
-├── asvspoof_extract_features.py    # ASVspoof öznitelik çıkarımı (ML / mel / spec)
-├── asvspoof_train_ml.py            # RF + SVM eğitimi/değerlendirmesi
-├── asvspoof_train_cnn.py           # Mel-spektrogram CNN
-├── asvspoof_train_spectrogram_cnn.py  # Standart spektrogram CNN
-├── asvspoof_cnn_common.py          # CNN ortak altyapısı
-├── asvspoof_results.py             # Sonuç kayıt/özet modülü
-├── download_datasets.py            # Veri setlerini indirir ve düzenler
-├── extract_*_features.py           # FoR öznitelik çıkarımı
-├── train_*.py                      # FoR eğitim scriptleri
-├── experiments/                    # Yan analizler
-├── figures/                        # Üretilen grafikler
-├── models/                         # Eğitilmiş modeller (yalnız arayüzün kullandıkları)
-├── requirements.txt                # Eğitim/çıkarım bağımlılıkları
-└── requirements_gui.txt            # Arayüz bağımlılıkları
+├── app.py                  # Streamlit arayüzü (ses yükle → tahmin)
+├── download_datasets.py    # Veri setlerini indirir ve düzenler
+├── asvspoof/               # ASVspoof 2019 LA: öznitelik çıkarımı + ML/CNN eğitimi
+│   ├── asvspoof_extract_features.py
+│   ├── asvspoof_train_ml.py
+│   ├── asvspoof_train_cnn.py
+│   ├── asvspoof_train_spectrogram_cnn.py
+│   ├── asvspoof_cnn_common.py
+│   └── asvspoof_results.py
+├── FoR/                    # Fake-or-Real: öznitelik çıkarımı + ML/CNN eğitimi
+│   ├── extract_*_features.py
+│   ├── train_*.py
+│   └── generate_groups.py
+├── tools/                  # compare_all_models.py, test_features.py
+├── experiments/            # Yan analizler
+├── figures/                # Üretilen grafikler
+├── models/                 # Eğitilmiş modeller (yalnız arayüzün kullandıkları)
+├── requirements.txt        # Eğitim/çıkarım bağımlılıkları
+└── requirements_gui.txt    # Arayüz bağımlılıkları
 ```
 
 Büyük dosyalar (veri setleri, çıkarılan `.npy` öznitelikleri, sanal ortam) depoya
-dâhil değildir; bkz. `.gitignore`.
+dâhil değildir; bkz. `.gitignore`. **Tüm betikler proje kök dizininden çalıştırılır.**
 
 ## Kurulum
 
@@ -82,11 +86,11 @@ python download_datasets.py all        # veya: asvspoof / for
 Öznitelik çıkarımı ve eğitim:
 
 ```bash
-# ASVspoof
-python asvspoof_extract_features.py --ml-only     # veya --mel-only / --spec-only
-python asvspoof_train_ml.py
-python asvspoof_train_cnn.py
-python asvspoof_train_spectrogram_cnn.py
+# ASVspoof (proje kökünden çalıştırın)
+python asvspoof/asvspoof_extract_features.py --ml-only     # veya --mel-only / --spec-only
+python asvspoof/asvspoof_train_ml.py
+python asvspoof/asvspoof_train_cnn.py
+python asvspoof/asvspoof_train_spectrogram_cnn.py
 ```
 
 Arayüz:
