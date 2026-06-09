@@ -4,7 +4,7 @@
 numpy>=2.0
 pandas>=2.0
 scipy>=1.11
-scikit-learn>=1.4
+scikit-learn==1.8.0   # kaydedilmiş RF/SVM modelleriyle aynı sürüm (sürüm uyuşmazlığı uyarısını önler)
 joblib>=1.3
 matplotlib>=3.8
 
