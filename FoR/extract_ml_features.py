@@ -3,6 +3,10 @@ import librosa
 import numpy as np
 from tqdm import tqdm
 
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FEATURES_DIR = os.path.join(_BASE_DIR, "features")
+os.makedirs(FEATURES_DIR, exist_ok=True)
+
 BASE_DIR = "Dataset/for-original"
 SPLITS = ["training", "validation", "testing"]
 
@@ -95,8 +99,8 @@ for split in SPLITS:
     y = np.array(real_labels + fake_labels, dtype=np.int8)
     
     prefix = PREFIX_MAP[split]
-    x_path = f"{prefix}-x_{split}_mfcc.npy"
-    y_path = f"{prefix}-y_{split}_labels.npy"
+    x_path = os.path.join(FEATURES_DIR, f"{prefix}-x_{split}_mfcc.npy")
+    y_path = os.path.join(FEATURES_DIR, f"{prefix}-y_{split}_labels.npy")
     np.save(x_path, x)
     np.save(y_path, y)
     

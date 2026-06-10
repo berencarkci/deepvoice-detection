@@ -44,6 +44,8 @@ from tqdm import tqdm
 # ─────────────────────────────────────────────
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASV_DIR = os.path.join(_BASE_DIR, "Dataset", "ASVspoof2019_LA")
+FEATURES_DIR = os.path.join(_BASE_DIR, "features")
+os.makedirs(FEATURES_DIR, exist_ok=True)
 
 SPLITS = {
     "train": {
@@ -163,9 +165,9 @@ def process_split(split_name, cfg, do_ml, do_mel, do_spec):
         return
 
     # CNN modaliteleri için diske doğrudan memory-mapped diziler (RAM dostu)
-    mel_mm = open_memmap(os.path.join(_BASE_DIR, f"ASV_mel_x_{split_name}.npy"),
+    mel_mm = open_memmap(os.path.join(FEATURES_DIR, f"ASV_mel_x_{split_name}.npy"),
                          mode="w+", dtype=np.float32, shape=(n, *MEL_SHAPE)) if do_mel else None
-    spec_mm = open_memmap(os.path.join(_BASE_DIR, f"ASV_spec_x_{split_name}.npy"),
+    spec_mm = open_memmap(os.path.join(FEATURES_DIR, f"ASV_spec_x_{split_name}.npy"),
                           mode="w+", dtype=np.float32, shape=(n, *SPEC_SHAPE)) if do_spec else None
 
     ml_x = []                       # MFCC küçük → listede tutulur
@@ -201,27 +203,27 @@ def process_split(split_name, cfg, do_ml, do_mel, do_spec):
 
     # ── ML kaydet ──
     if do_ml:
-        np.save(os.path.join(_BASE_DIR, f"ASV_ml_x_{split_name}.npy"),
+        np.save(os.path.join(FEATURES_DIR, f"ASV_ml_x_{split_name}.npy"),
                 np.array(ml_x, dtype=np.float32))
-        np.save(os.path.join(_BASE_DIR, f"ASV_ml_y_{split_name}.npy"), y_arr)
-        np.save(os.path.join(_BASE_DIR, f"ASV_ml_groups_{split_name}.npy"), g_arr)
+        np.save(os.path.join(FEATURES_DIR, f"ASV_ml_y_{split_name}.npy"), y_arr)
+        np.save(os.path.join(FEATURES_DIR, f"ASV_ml_groups_{split_name}.npy"), g_arr)
         print(f"  ✔ ML  : x=({w}, 194)  konuşmacı={len(np.unique(g_arr))}")
 
     # ── MEL kaydet (gerekiyorsa kırp) ──
     if do_mel:
-        _finalize_memmap(mel_mm, os.path.join(_BASE_DIR, f"ASV_mel_x_{split_name}.npy"),
+        _finalize_memmap(mel_mm, os.path.join(FEATURES_DIR, f"ASV_mel_x_{split_name}.npy"),
                          w, n, MEL_SHAPE)
-        np.save(os.path.join(_BASE_DIR, f"ASV_mel_y_{split_name}.npy"), y_arr)
-        np.save(os.path.join(_BASE_DIR, f"ASV_mel_groups_{split_name}.npy"), g_arr)
+        np.save(os.path.join(FEATURES_DIR, f"ASV_mel_y_{split_name}.npy"), y_arr)
+        np.save(os.path.join(FEATURES_DIR, f"ASV_mel_groups_{split_name}.npy"), g_arr)
         print(f"  ✔ MEL : x=({w}, {MEL_SHAPE[0]}, {MEL_SHAPE[1]})  "
               f"~{w * int(np.prod(MEL_SHAPE)) * 4 / 1024**3:.2f} GB")
 
     # ── SPEC kaydet (gerekiyorsa kırp) ──
     if do_spec:
-        _finalize_memmap(spec_mm, os.path.join(_BASE_DIR, f"ASV_spec_x_{split_name}.npy"),
+        _finalize_memmap(spec_mm, os.path.join(FEATURES_DIR, f"ASV_spec_x_{split_name}.npy"),
                          w, n, SPEC_SHAPE)
-        np.save(os.path.join(_BASE_DIR, f"ASV_spec_y_{split_name}.npy"), y_arr)
-        np.save(os.path.join(_BASE_DIR, f"ASV_spec_groups_{split_name}.npy"), g_arr)
+        np.save(os.path.join(FEATURES_DIR, f"ASV_spec_y_{split_name}.npy"), y_arr)
+        np.save(os.path.join(FEATURES_DIR, f"ASV_spec_groups_{split_name}.npy"), g_arr)
         print(f"  ✔ SPEC: x=({w}, {SPEC_SHAPE[0]}, {SPEC_SHAPE[1]})  "
               f"~{w * int(np.prod(SPEC_SHAPE)) * 4 / 1024**3:.2f} GB")
 

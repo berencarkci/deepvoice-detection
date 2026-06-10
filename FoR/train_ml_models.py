@@ -13,6 +13,9 @@ import atexit
 import os
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FEATURES_DIR = os.path.join(_BASE_DIR, "features")
+LOGS_DIR = os.path.join(_BASE_DIR, "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
 FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 _MPL_DIR = os.path.join(_BASE_DIR, ".mplconfig")
@@ -39,7 +42,7 @@ except ModuleNotFoundError:
     )
     raise SystemExit(1) from None
 
-LOG_FILE = os.path.join(_BASE_DIR, "train_ml.log")
+LOG_FILE = os.path.join(LOGS_DIR, "train_ml.log")
 
 class _TeeIO:
     """stdout'u konsola ve train_ml.log dosyasına çift yazar."""
@@ -108,21 +111,21 @@ def compute_eer(y_true, y_score):
 
 # 1. Tüm Klasörlerdeki Verileri Yükle ve TEK BİR HAVUZDA Birleştir
 print("Tüm veriler (Train + Val + Test) yüklenip birleştiriliyor...")
-x1 = np.load(os.path.join(_BASE_DIR, "EMF0-x_training_mfcc.npy"))
-y1 = np.load(os.path.join(_BASE_DIR, "EMF0-y_training_labels.npy"))
+x1 = np.load(os.path.join(FEATURES_DIR, "EMF0-x_training_mfcc.npy"))
+y1 = np.load(os.path.join(FEATURES_DIR, "EMF0-y_training_labels.npy"))
 
-x2 = np.load(os.path.join(_BASE_DIR, "EMF1-x_validation_mfcc.npy"))
-y2 = np.load(os.path.join(_BASE_DIR, "EMF1-y_validation_labels.npy"))
+x2 = np.load(os.path.join(FEATURES_DIR, "EMF1-x_validation_mfcc.npy"))
+y2 = np.load(os.path.join(FEATURES_DIR, "EMF1-y_validation_labels.npy"))
 
-x3 = np.load(os.path.join(_BASE_DIR, "EMF2-x_testing_mfcc.npy"))
-y3 = np.load(os.path.join(_BASE_DIR, "EMF2-y_testing_labels.npy"))
+x3 = np.load(os.path.join(FEATURES_DIR, "EMF2-x_testing_mfcc.npy"))
+y3 = np.load(os.path.join(FEATURES_DIR, "EMF2-y_testing_labels.npy"))
 
 X_TOTAL = np.concatenate((x1, x2, x3), axis=0)
 Y_TOTAL = np.concatenate((y1, y2, y3), axis=0)
 
-groups1 = np.load(os.path.join(_BASE_DIR, "EMF_groups_training.npy"))
-groups2 = np.load(os.path.join(_BASE_DIR, "EMF_groups_validation.npy"))
-groups3 = np.load(os.path.join(_BASE_DIR, "EMF_groups_testing.npy"))
+groups1 = np.load(os.path.join(FEATURES_DIR, "EMF_groups_training.npy"))
+groups2 = np.load(os.path.join(FEATURES_DIR, "EMF_groups_validation.npy"))
+groups3 = np.load(os.path.join(FEATURES_DIR, "EMF_groups_testing.npy"))
 
 if len(groups1) != len(x1):
     raise ValueError(

@@ -47,6 +47,9 @@ MODELS_DIR = os.path.join(_BASE_DIR, "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
 FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
+FEATURES_DIR = os.path.join(_BASE_DIR, "features")
+LOGS_DIR = os.path.join(_BASE_DIR, "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
 
 K_FOLDS = 5
 SPLITS = ["train", "dev", "eval"]
@@ -301,7 +304,7 @@ def run_experiment(cfg):
     cfg: dict(name, x_prefix, freq_mask, log_file, model_tag, plot_prefix, title, batch_env)
       x_prefix: "ASV_mel" veya "ASV_spec"  → {prefix}_x_{split}.npy, {prefix}_groups_{split}.npy
     """
-    _init_log(os.path.join(_BASE_DIR, cfg["log_file"]))
+    _init_log(os.path.join(LOGS_DIR, cfg["log_file"]))
 
     device = torch.device(
         "mps" if torch.backends.mps.is_available() else
@@ -322,9 +325,9 @@ def run_experiment(cfg):
     # ── Veri (mmap) ──
     xs, ys, gs, split_id = [], [], [], []
     for k, split in enumerate(SPLITS):
-        xp = os.path.join(_BASE_DIR, f"{cfg['x_prefix']}_x_{split}.npy")
-        yp = os.path.join(_BASE_DIR, f"{cfg['x_prefix']}_y_{split}.npy")
-        gp = os.path.join(_BASE_DIR, f"{cfg['x_prefix']}_groups_{split}.npy")
+        xp = os.path.join(FEATURES_DIR, f"{cfg['x_prefix']}_x_{split}.npy")
+        yp = os.path.join(FEATURES_DIR, f"{cfg['x_prefix']}_y_{split}.npy")
+        gp = os.path.join(FEATURES_DIR, f"{cfg['x_prefix']}_groups_{split}.npy")
         if not (os.path.exists(xp) and os.path.exists(yp) and os.path.exists(gp)):
             print(f"\n❌ Eksik dosya ({split}): {xp} / {yp} / {gp}")
             print("   Önce: python asvspoof/asvspoof_extract_features.py "

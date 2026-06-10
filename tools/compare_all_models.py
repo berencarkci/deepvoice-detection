@@ -49,6 +49,9 @@ from sklearn.metrics import (
 warnings.filterwarnings("ignore", category=UserWarning)
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FEATURES_DIR = os.path.join(_BASE_DIR, "features")
+LOGS_DIR = os.path.join(_BASE_DIR, "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
 FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 RESULTS_DIR = os.path.join(_BASE_DIR, "results")
@@ -302,8 +305,8 @@ if rf_path and rf_scaler_path:
     print(f"  Model: {rf_path}")
     print(f"  Scaler: {rf_scaler_path}")
     y_t, y_p, y_pr = ml_inference(rf_path, rf_scaler_path,
-                                  "EMF2-x_testing_mfcc.npy",
-                                  "EMF2-y_testing_labels.npy")
+                                  os.path.join(FEATURES_DIR, "EMF2-x_testing_mfcc.npy"),
+                                  os.path.join(FEATURES_DIR, "EMF2-y_testing_labels.npy"))
     results.append(compute_metrics("Random Forest", y_t, y_p, y_pr))
     predictions["Random Forest"] = (y_t, y_p, y_pr)
     print(f"  ✔ Tamam | Accuracy={results[-1]['Accuracy']:.4f}")
@@ -320,8 +323,8 @@ if svm_path and svm_scaler_path:
     print(f"  Model: {svm_path}")
     print(f"  Scaler: {svm_scaler_path}")
     y_t, y_p, y_pr = ml_inference(svm_path, svm_scaler_path,
-                                  "EMF2-x_testing_mfcc.npy",
-                                  "EMF2-y_testing_labels.npy")
+                                  os.path.join(FEATURES_DIR, "EMF2-x_testing_mfcc.npy"),
+                                  os.path.join(FEATURES_DIR, "EMF2-y_testing_labels.npy"))
     results.append(compute_metrics("SVM", y_t, y_p, y_pr))
     predictions["SVM"] = (y_t, y_p, y_pr)
     print(f"  ✔ Tamam | Accuracy={results[-1]['Accuracy']:.4f}")
@@ -334,13 +337,13 @@ print("\n" + "=" * 65)
 print("[3/4] CNN-Mel değerlendiriliyor...")
 print("=" * 65)
 mel_cnn_path = resolve_cnn_checkpoint("deepvoice_cnn")
-if mel_cnn_path and os.path.exists("ECF0-x_training_mel.npy"):
+if mel_cnn_path and os.path.exists(os.path.join(FEATURES_DIR, "ECF0-x_training_mel.npy")):
     print(f"  Ağırlık dosyası: {mel_cnn_path}")
     y_t, y_p, y_pr = cnn_inference(
         mel_cnn_path,
-        "ECF2-x_testing_mel.npy",
-        "ECF2-y_testing_mel.npy",
-        "ECF0-x_training_mel.npy",
+        os.path.join(FEATURES_DIR, "ECF2-x_testing_mel.npy"),
+        os.path.join(FEATURES_DIR, "ECF2-y_testing_mel.npy"),
+        os.path.join(FEATURES_DIR, "ECF0-x_training_mel.npy"),
     )
     results.append(compute_metrics("CNN-Mel", y_t, y_p, y_pr))
     predictions["CNN-Mel"] = (y_t, y_p, y_pr)
@@ -354,13 +357,13 @@ print("\n" + "=" * 65)
 print("[4/4] CNN-Spec değerlendiriliyor...")
 print("=" * 65)
 spec_cnn_path = resolve_cnn_checkpoint("deepvoice_spec_cnn")
-if spec_cnn_path and os.path.exists("ESF0-x_training_spec.npy"):
+if spec_cnn_path and os.path.exists(os.path.join(FEATURES_DIR, "ESF0-x_training_spec.npy")):
     print(f"  Ağırlık dosyası: {spec_cnn_path}")
     y_t, y_p, y_pr = cnn_inference(
         spec_cnn_path,
-        "ESF2-x_testing_spec.npy",
-        "ESF2-y_testing_spec.npy",
-        "ESF0-x_training_spec.npy",
+        os.path.join(FEATURES_DIR, "ESF2-x_testing_spec.npy"),
+        os.path.join(FEATURES_DIR, "ESF2-y_testing_spec.npy"),
+        os.path.join(FEATURES_DIR, "ESF0-x_training_spec.npy"),
     )
     results.append(compute_metrics("CNN-Spec", y_t, y_p, y_pr))
     predictions["CNN-Spec"] = (y_t, y_p, y_pr)

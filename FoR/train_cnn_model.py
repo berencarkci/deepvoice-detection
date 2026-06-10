@@ -4,6 +4,9 @@ import gc
 import os
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FEATURES_DIR = os.path.join(_BASE_DIR, "features")
+LOGS_DIR = os.path.join(_BASE_DIR, "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
 FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
 os.makedirs(FIGURES_DIR, exist_ok=True)
 _MPL_DIR = os.path.join(_BASE_DIR, ".mplconfig")
@@ -34,7 +37,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import GroupKFold, GroupShuffleSplit
 
 # ── Terminal + dosya: her çalıştırmada train_cnn_mel.log güncellenir ──────────
-LOG_FILE = os.path.join(_BASE_DIR, "train_cnn_mel.log")
+LOG_FILE = os.path.join(LOGS_DIR, "train_cnn_mel.log")
 
 class _TeeIO:
     """stdout'u konsola ve log dosyasına çift yazar."""
@@ -94,23 +97,23 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 # 1. TÜM VERİLERİ YÜKLEME VE BİRLEŞTİRME
 # ─────────────────────────────────────────────
 print("\nTüm veriler (Train + Val + Test) yüklenip birleştiriliyor...")
-x1 = np.load("ECF0-x_training_mel.npy").astype(np.float32)
-y1 = np.load("ECF0-y_training_mel.npy").astype(np.float32)
+x1 = np.load(os.path.join(FEATURES_DIR, "ECF0-x_training_mel.npy")).astype(np.float32)
+y1 = np.load(os.path.join(FEATURES_DIR, "ECF0-y_training_mel.npy")).astype(np.float32)
 
-x2 = np.load("ECF1-x_validation_mel.npy").astype(np.float32)
-y2 = np.load("ECF1-y_validation_mel.npy").astype(np.float32)
+x2 = np.load(os.path.join(FEATURES_DIR, "ECF1-x_validation_mel.npy")).astype(np.float32)
+y2 = np.load(os.path.join(FEATURES_DIR, "ECF1-y_validation_mel.npy")).astype(np.float32)
 
-x3 = np.load("ECF2-x_testing_mel.npy").astype(np.float32)
-y3 = np.load("ECF2-y_testing_mel.npy").astype(np.float32)
+x3 = np.load(os.path.join(FEATURES_DIR, "ECF2-x_testing_mel.npy")).astype(np.float32)
+y3 = np.load(os.path.join(FEATURES_DIR, "ECF2-y_testing_mel.npy")).astype(np.float32)
 
 X_TOTAL = np.concatenate((x1, x2, x3), axis=0)
 Y_TOTAL = np.concatenate((y1, y2, y3), axis=0)
 
 del x1, y1, x2, y2, x3, y3  # RAM temizliği
 
-groups1 = np.load("EMF_groups_training.npy")
-groups2 = np.load("EMF_groups_validation.npy")
-groups3 = np.load("EMF_groups_testing.npy")
+groups1 = np.load(os.path.join(FEATURES_DIR, "EMF_groups_training.npy"))
+groups2 = np.load(os.path.join(FEATURES_DIR, "EMF_groups_validation.npy"))
+groups3 = np.load(os.path.join(FEATURES_DIR, "EMF_groups_testing.npy"))
 GROUPS_TOTAL = np.concatenate((groups1, groups2, groups3), axis=0)
 
 print(f"Toplam Birleşik Veri Seti Boyutu: {X_TOTAL.shape[0]} örnek")

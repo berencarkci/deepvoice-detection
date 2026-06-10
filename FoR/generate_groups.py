@@ -23,6 +23,10 @@ import librosa
 import numpy as np
 from tqdm import tqdm
 
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FEATURES_DIR = os.path.join(_BASE_DIR, "features")
+os.makedirs(FEATURES_DIR, exist_ok=True)
+
 BASE_DIR = "Dataset/for-original"
 SPLITS = ["training", "validation", "testing"]
 SR = 22050
@@ -62,7 +66,7 @@ def process_split(split):
                 pass
 
     groups = np.array(groups)
-    save_path = f"EMF_groups_{split}.npy"
+    save_path = os.path.join(FEATURES_DIR, f"EMF_groups_{split}.npy")
     np.save(save_path, groups)
     print(f"Saved {save_path} with shape {groups.shape}")
 

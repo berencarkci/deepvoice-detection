@@ -51,6 +51,8 @@ Ayrıntılı tablolar: [`results/asvspoof_results.md`](results/asvspoof_results.
 ├── tools/                  # compare_all_models.py, test_features.py
 ├── experiments/            # Yan analizler
 ├── results/                # Sonuç tabloları (.csv/.md)
+├── features/               # Çıkarılan öznitelikler (.npy) — otomatik oluşur, depoya dâhil değil
+├── logs/                   # Eğitim/çıkarım logları (.log) — otomatik oluşur, depoya dâhil değil
 ├── figures/                # Üretilen grafikler
 ├── models/                 # Eğitilmiş modeller (yalnız arayüzün kullandıkları)
 ├── requirements.txt        # Eğitim/çıkarım bağımlılıkları

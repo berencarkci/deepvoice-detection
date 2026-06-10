@@ -27,6 +27,9 @@ import atexit
 import os
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FEATURES_DIR = os.path.join(_BASE_DIR, "features")
+LOGS_DIR = os.path.join(_BASE_DIR, "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
 _MPL_DIR = os.path.join(_BASE_DIR, ".mplconfig")
 os.makedirs(_MPL_DIR, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", _MPL_DIR)
@@ -39,7 +42,7 @@ except ModuleNotFoundError:
     print("HATA: matplotlib yüklü değil.", file=sys.stderr)
     raise SystemExit(1)
 
-LOG_FILE = os.path.join(_BASE_DIR, "asvspoof_train_ml.log")
+LOG_FILE = os.path.join(LOGS_DIR, "asvspoof_train_ml.log")
 
 class _TeeIO:
     def __init__(self, *streams):
@@ -120,9 +123,9 @@ print("\nVeriler yükleniyor...")
 
 xs, ys, gs, split_id = {}, {}, {}, {}
 for k, s in enumerate(SPLITS):
-    xs[s] = np.load(os.path.join(_BASE_DIR, f"ASV_ml_x_{s}.npy"))
-    ys[s] = np.load(os.path.join(_BASE_DIR, f"ASV_ml_y_{s}.npy"))
-    gs[s] = np.load(os.path.join(_BASE_DIR, f"ASV_ml_groups_{s}.npy"))
+    xs[s] = np.load(os.path.join(FEATURES_DIR, f"ASV_ml_x_{s}.npy"))
+    ys[s] = np.load(os.path.join(FEATURES_DIR, f"ASV_ml_y_{s}.npy"))
+    gs[s] = np.load(os.path.join(FEATURES_DIR, f"ASV_ml_groups_{s}.npy"))
     print(f"  {s:<6}: {xs[s].shape[0]:>6} örnek  "
           f"(bonafide={int(np.sum(ys[s]==1))}, spoof={int(np.sum(ys[s]==0))})  "
           f"konuşmacı={len(np.unique(gs[s]))}")
