@@ -21,8 +21,9 @@ MD_PATH = os.path.join(_RESULTS_DIR, "asvspoof_results.md")
 COLUMNS = ["method", "protocol", "EER", "EER_std", "ACC", "BalACC",
            "Precision", "Recall", "F1", "AUC"]
 _METHOD_ORDER = ["RF", "SVM", "Mel-CNN", "Spec-CNN"]
-_PROTO_ORDER = ["kfold_pooled", "official_dev", "official_eval"]
-_PROTO_LABEL = {"kfold_pooled": "Havuzlanmış 5-fold çapraz doğrulama",
+_PROTO_ORDER = ["kfold_pooled", "attack_kfold", "official_dev", "official_eval"]
+_PROTO_LABEL = {"kfold_pooled": "Havuzlanmış 5-fold çapraz doğrulama (konuşmacıya göre)",
+                "attack_kfold": "Saldırı-gruplu 5-fold çapraz doğrulama (görülmemiş saldırı)",
                 "official_dev": "Standart protokol (dev / doğrulama)",
                 "official_eval": "Standart protokol (eval)"}
 
