@@ -42,6 +42,9 @@ verir. Tüm metrikler (Accuracy, Precision, Recall, F1) için:
 |---|---|
 | ![EER](figures/asvspoof_eer.png) | Modellere göre EER (düşük = daha iyi) |
 | ![Metrikler](figures/asvspoof_metrics.png) | Dengeli doğruluk / F1 / AUC (yüksek = daha iyi) |
+| ![Tüm metrikler](figures/asvspoof_all_metrics.png) | Tüm metriklerin model × metrik ısı haritası |
+| ![Radar](figures/asvspoof_radar.png) | Modellerin metrik radar karşılaştırması |
+| ![Precision-Recall](figures/asvspoof_precision_recall.png) | Precision–Recall dengesi (bonafide sınıfı) |
 
 ```bash
 python tools/plot_results.py

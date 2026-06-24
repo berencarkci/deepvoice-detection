@@ -32,6 +32,9 @@ models/*
 figures/*
 !figures/asvspoof_eer.png
 !figures/asvspoof_metrics.png
+!figures/asvspoof_all_metrics.png
+!figures/asvspoof_radar.png
+!figures/asvspoof_precision_recall.png
 
 # --- Python cache / matplotlib config ---
 __pycache__/
