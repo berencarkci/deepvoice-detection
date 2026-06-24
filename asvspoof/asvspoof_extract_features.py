@@ -103,6 +103,30 @@ def parse_protocol(protocol_path):
     return entries
 
 
+def build_attack_groups():
+    """Saldırı-gruplu çapraz doğrulama için grup dizisi üretir (öznitelik sırasıyla hizalı).
+
+      * spoof    → saldırı türü (A01..A19)
+      * bonafide → bona_<konuşmacı>
+
+    Böylece her fold'un test seti eğitimde yer almayan saldırılardan oluşur. Grup dizisi,
+    öznitelik çıkarımıyla AYNI sırada (train→dev→eval, protokol sırası, var olan flac'lar)
+    üretilir; türetilen etiketler kayıtlı ASV_*_y dizileriyle birebir eşleşmelidir.
+
+    Döner: (groups, türetilen_y)
+    """
+    groups, ys = [], []
+    for s in ["train", "dev", "eval"]:
+        cfg = SPLITS[s]
+        flac_dir = cfg["flac_dir"]
+        for audio_id, speaker_id, label, attack_id in parse_protocol(cfg["protocol"]):
+            if not os.path.exists(os.path.join(flac_dir, f"{audio_id}.flac")):
+                continue
+            groups.append(attack_id if label == 0 else f"bona_{speaker_id}")
+            ys.append(label)
+    return np.array(groups), np.array(ys, dtype=np.int64)
+
+
 # ─────────────────────────────────────────────
 # ÖZNİTELİK HESAPLAYICILAR  (hepsi tek bir y sinyalinden)
 # ─────────────────────────────────────────────

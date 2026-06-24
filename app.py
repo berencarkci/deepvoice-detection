@@ -194,7 +194,7 @@ def predict_audio(file_path, model_choice):
             pad_width = MAX_PAD_LEN - mel_spec_db.shape[1]
             mel_spec_db = np.pad(mel_spec_db, pad_width=((0, 0), (0, pad_width)), mode="constant")
 
-        MODEL_PATH = os.path.join(MODELS_DIR, "asvspoof_cnn_mel_official.pth")
+        MODEL_PATH = os.path.join(MODELS_DIR, "asvspoof_cnn_mel_final.pth")
         mean, std = load_norm_stats(MODEL_PATH)            # sidecar'dan global mean/std
         S_norm = (mel_spec_db - mean) / (std + 1e-8)
         input_tensor = torch.tensor(S_norm, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
@@ -224,7 +224,7 @@ def predict_audio(file_path, model_choice):
             pad_width = MAX_PAD_LEN - spec_db.shape[1]
             spec_db = np.pad(spec_db, pad_width=((0, 0), (0, pad_width)), mode="constant")
 
-        MODEL_PATH = os.path.join(MODELS_DIR, "asvspoof_cnn_spec_official.pth")
+        MODEL_PATH = os.path.join(MODELS_DIR, "asvspoof_cnn_spec_final.pth")
         mean, std = load_norm_stats(MODEL_PATH)
         D_norm = (spec_db - mean) / (std + 1e-8)
         input_tensor = torch.tensor(D_norm, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
@@ -352,5 +352,5 @@ with tab3:
     **Siber güvenlik ve bilgi güvenilirliği** için geliştirilen bu sistem ses sinyallerini inceler.
     - **ML Modelleri (RF, SVM):** Sesten 194 spektral istatistik (MFCC, ZCR, RMS, Chroma vb.) çıkarılır, StandardScaler ile ölçeklenip sınıflandırılır.
     - **Derin Öğrenme (CNN):** Mel/Standart Spektrogram çıkarılıp 216 zaman dilimine sabitlenir; Residual block içeren CNN, sentetik sesin bıraktığı **artefaktları** yakalar.
-    - **Modeller:** ASVspoof 2019 LA standart protokolüyle eğitildi; CNN normalizasyon istatistikleri model yanındaki `.norm.json` dosyasından okunur.
+    - **Modeller:** ASVspoof 2019 LA veri setiyle eğitildi; CNN normalizasyon istatistikleri model yanındaki `.norm.json` dosyasından okunur.
     """)

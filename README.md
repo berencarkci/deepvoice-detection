@@ -65,7 +65,7 @@ python tools/plot_results.py
 │   ├── train_*.py
 │   └── generate_groups.py
 ├── tools/                  # compare_all_models.py, plot_results.py, test_features.py
-├── experiments/            # asvspoof_attack_grouped_kfold.py (saldırı-gruplu değerlendirme)
+├── experiments/            # Kapsam dışı yan analizler
 ├── results/                # Sonuç tabloları (.csv/.md)
 ├── features/               # Çıkarılan öznitelikler (.npy) — otomatik oluşur, depoya dâhil değil
 ├── logs/                   # Eğitim/çıkarım logları (.log) — otomatik oluşur, depoya dâhil değil
@@ -102,20 +102,23 @@ python download_datasets.py all        # veya: asvspoof / for
 
 ## Çalıştırma
 
-Öznitelik çıkarımı ve değerlendirme (proje kökünden çalıştırın):
+Öznitelik çıkarımı ve eğitim/değerlendirme (proje kökünden çalıştırın):
 
 ```bash
 # 1) Öznitelikler (ML / Mel / Spec)
 python asvspoof/asvspoof_extract_features.py     # veya --ml-only / --mel-only / --spec-only
 
-# 2) Saldırı-gruplu 5 katlı çapraz doğrulama (dört model)
-python experiments/asvspoof_attack_grouped_kfold.py   # veya --ml-only / --cnn-only
+# 2) Saldırı-gruplu 5 katlı çapraz doğrulama + arayüz için nihai model
+python asvspoof/asvspoof_train_ml.py
+python asvspoof/asvspoof_train_cnn.py
+python asvspoof/asvspoof_train_spectrogram_cnn.py
 
 # 3) Sonuç grafikleri
 python tools/plot_results.py
 ```
 
-Sonuçlar `results/asvspoof_results.csv` (+`.md`) dosyasına yazılır.
+Her betik dört modelin saldırı-gruplu sonuçlarını `results/asvspoof_results.csv` (+`.md`)
+dosyasına yazar ve arayüz için tüm havuzla eğitilmiş nihai modeli kaydeder.
 
 Arayüz:
 

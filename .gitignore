@@ -21,10 +21,10 @@ models/*
 !models/asvspoof_random_forest_scaler.pkl
 !models/asvspoof_svm_model.pkl
 !models/asvspoof_svm_scaler.pkl
-!models/asvspoof_cnn_mel_official.pth
-!models/asvspoof_cnn_spec_official.pth
-!models/asvspoof_cnn_mel_official.norm.json
-!models/asvspoof_cnn_spec_official.norm.json
+!models/asvspoof_cnn_mel_final.pth
+!models/asvspoof_cnn_spec_final.pth
+!models/asvspoof_cnn_mel_final.norm.json
+!models/asvspoof_cnn_spec_final.norm.json
 
 # --- Grafikler: yalnızca güncel sonuç grafikleri repoda tutulur ---
 #     (eğitim scriptlerinin ürettiği ek figürler depoya alınmaz;
