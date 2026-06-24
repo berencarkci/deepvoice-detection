@@ -1,12 +1,12 @@
 """
 ASVspoof sonuçları için ortak kayıt modülü.
 
-Her eğitim scripti (asvspoof_train_ml / _cnn / _spectrogram_cnn) sonuçlarını buraya
-record_result(...) ile yazar:
+Eğitim/değerlendirme scriptleri sonuçlarını record_result(...) ile buraya yazar:
   * UPSERT: aynı (method, protocol) tekrar yazılırsa satır güncellenir (kopya olmaz).
   * asvspoof_results.csv kalıcı tutulur; asvspoof_results.md tablosu CSV'den üretilir.
 
-protocol: "kfold_pooled" (havuzlanmış 5-fold) | "official_eval" (standart protokol, eval)
+Değerlendirme protokolü: "attack_kfold" — saldırı-gruplu 5 katlı çapraz doğrulama
+(her katta görülmemiş saldırı türleriyle test edilir).
 """
 
 import os
@@ -21,11 +21,7 @@ MD_PATH = os.path.join(_RESULTS_DIR, "asvspoof_results.md")
 COLUMNS = ["method", "protocol", "EER", "EER_std", "ACC", "BalACC",
            "Precision", "Recall", "F1", "AUC"]
 _METHOD_ORDER = ["RF", "SVM", "Mel-CNN", "Spec-CNN"]
-_PROTO_ORDER = ["kfold_pooled", "attack_kfold", "official_dev", "official_eval"]
-_PROTO_LABEL = {"kfold_pooled": "Havuzlanmış 5-fold çapraz doğrulama (konuşmacıya göre)",
-                "attack_kfold": "Saldırı-gruplu 5-fold çapraz doğrulama (görülmemiş saldırı)",
-                "official_dev": "Standart protokol (dev / doğrulama)",
-                "official_eval": "Standart protokol (eval)"}
+_PROTO_LABEL = {"attack_kfold": "Saldırı-gruplu 5 katlı çapraz doğrulama (görülmemiş saldırı)"}
 
 
 def _fmt(v):
@@ -42,10 +38,9 @@ def _load():
 
 
 def _sort_key(key):
-    m, p = key
+    m, _ = key
     mi = _METHOD_ORDER.index(m) if m in _METHOD_ORDER else len(_METHOD_ORDER)
-    pi = _PROTO_ORDER.index(p) if p in _PROTO_ORDER else len(_PROTO_ORDER)
-    return (mi, m, pi, p)
+    return (mi, m)
 
 
 def record_result(method, protocol, eer, balacc, recall, auc, eer_std=None,
@@ -69,66 +64,39 @@ def record_result(method, protocol, eer, balacc, recall, auc, eer_std=None,
 
 
 def _write_md(rows):
-    methods = []
-    for key in sorted(rows, key=_sort_key):
-        if key[0] not in methods:
-            methods.append(key[0])
-
-    def get(m, p, col):
-        r = rows.get((m, p))
+    def get(m, col):
+        r = rows.get((m, "attack_kfold"))
         return r[col] if r and r.get(col) else ""
 
-    def cell(m, p, col):
-        return get(m, p, col) or "—"
+    def cell(m, col):
+        return get(m, col) or "—"
 
-    def eer_pm(m, p):
-        e = get(m, p, "EER"); s = get(m, p, "EER_std")
+    def eer_pm(m):
+        e = get(m, "EER"); s = get(m, "EER_std")
         if not e:
             return "—"
         return f"{e} ± {s}" if s else e
 
-    def inflation(m):
-        try:
-            k = float(get(m, "kfold_pooled", "EER"))
-            o = float(get(m, "official_eval", "EER"))
-            return f"{o / k:.1f}×" if k > 0 else "—"
-        except (ValueError, ZeroDivisionError):
-            return "—"
+    methods = [m for m in _METHOD_ORDER if (m, "attack_kfold") in rows]
 
     L = []
     L.append("# ASVspoof 2019 LA — Sonuç Özeti")
     L.append("")
     L.append("> `asvspoof_results.py` tarafından `asvspoof_results.csv`'den üretilir.")
     L.append("")
-    L.append("Metrik = **EER** (düşük = daha iyi). Sınıf dengesizliği (~1:9) nedeniyle EER, "
-             "dengeli doğruluk (BalACC) ve AUC esas alınır.")
+    L.append("Değerlendirme: **saldırı-gruplu 5 katlı çapraz doğrulama** — her katta "
+             "modeller görülmemiş saldırı türleriyle test edilir. Ana metrik **EER** "
+             "(düşük = daha iyi); sınıf dengesizliği (~1:9) nedeniyle dengeli doğruluk "
+             "(BalACC) ve AUC de raporlanır.")
     L.append("")
-    L.append("- **Havuzlanmış k-fold:** train+dev+eval birleştirilir, konuşmacıya göre GroupKFold(5).")
-    L.append("- **Standart protokol:** train ile eğit, dev ile doğrula, eval ile test.")
-    L.append("")
-    L.append("## Ana tablo — EER")
-    L.append("")
-    L.append("| Yöntem | Havuzlanmış k-fold | Standart protokol (eval) | Oran |")
-    L.append("|--------|--------------------|--------------------------|------|")
+    L.append("| Yöntem | EER | Accuracy | BalACC | Precision | Recall | F1 | AUC |")
+    L.append("|--------|-----|----------|--------|-----------|--------|----|-----|")
     for m in methods:
-        L.append(f"| {m} | {eer_pm(m, 'kfold_pooled')} | {cell(m, 'official_eval', 'EER')} "
-                 f"| {inflation(m)} |")
+        L.append(f"| {m} | {eer_pm(m)} | {cell(m, 'ACC')} | {cell(m, 'BalACC')} "
+                 f"| {cell(m, 'Precision')} | {cell(m, 'Recall')} | {cell(m, 'F1')} "
+                 f"| {cell(m, 'AUC')} |")
     L.append("")
-    for proto in _PROTO_ORDER:
-        proto_methods = [m for m in methods if (m, proto) in rows]
-        if not proto_methods:
-            continue
-        L.append(f"### {_PROTO_LABEL[proto]}")
-        L.append("")
-        L.append("| Yöntem | EER | Accuracy | BalACC | Precision | Recall | F1 | AUC |")
-        L.append("|--------|-----|----------|--------|-----------|--------|----|-----|")
-        for m in proto_methods:
-            L.append(f"| {m} | {cell(m, proto, 'EER')} | {cell(m, proto, 'ACC')} "
-                     f"| {cell(m, proto, 'BalACC')} | {cell(m, proto, 'Precision')} "
-                     f"| {cell(m, proto, 'Recall')} | {cell(m, proto, 'F1')} "
-                     f"| {cell(m, proto, 'AUC')} |")
-        L.append("")
-    L.append('"Oran" sütunu = standart protokol EER / havuzlanmış k-fold EER.')
+    L.append("EER değerleri 5 katın ortalaması ± standart sapma olarak verilir.")
     L.append("")
     with open(MD_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(L))

@@ -5,9 +5,8 @@ Havuzlanmış train+dev+eval üzerinde GroupKFold(5) uygulanır; grup ataması:
   * spoof    → saldırı türü (A01..A19)
   * bonafide → konuşmacı (bona_<speaker>)
 
-Böylece her fold'un test seti, eğitimde yer almayan GÖRÜLMEMİŞ saldırılardan oluşur
-(saldırı-tipi sızıntısı tasarımdan engellenir). Mevcut konuşmacıya-göre havuzlanmış
-k-fold'un aksine, bu protokol resmî protokole yakın (dürüst) sonuç vermelidir.
+Böylece her fold'un test seti, eğitimde yer almayan GÖRÜLMEMİŞ saldırılardan oluşur;
+modelin görülmemiş sentez sistemlerine genelleme başarımı ölçülür.
 
 Saldırı etiketi öznitelik .npy'lerinde tutulmaz; protokol dosyalarından, öznitelik
 çıkarımıyla AYNI sırada yeniden türetilir ve kayıtlı y ile birebir hizalandığı

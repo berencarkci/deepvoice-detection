@@ -26,13 +26,12 @@ models/*
 !models/asvspoof_cnn_mel_official.norm.json
 !models/asvspoof_cnn_spec_official.norm.json
 
-# --- Grafikler: yalnızca dürüst protokol-karşılaştırma grafikleri repoda tutulur ---
-#     (eğitim scriptlerinin ürettiği havuzlanmış k-fold figürleri iyimser olduğu
-#      için depoya alınmaz; tools/plot_protocol_comparison.py ile üretilir)
+# --- Grafikler: yalnızca güncel sonuç grafikleri repoda tutulur ---
+#     (eğitim scriptlerinin ürettiği ek figürler depoya alınmaz;
+#      tools/plot_results.py ile üretilir)
 figures/*
-!figures/asvspoof_protocol_eer.png
-!figures/asvspoof_protocol_balacc.png
-!figures/asvspoof_protocol_inflation.png
+!figures/asvspoof_eer.png
+!figures/asvspoof_metrics.png
 
 # --- Python cache / matplotlib config ---
 __pycache__/
@@ -49,6 +48,9 @@ __pycache__/
 
 # --- Rapor PDF'leri (öğrenci fotoğrafı/iletişim bilgisi içerir — bilinçli hariç) ---
 *.pdf
+
+# --- Lokal yedekler (depoya girmez) ---
+backup_tum_protokoller/
 
 # --- Geçici dosyalar ---
 *.tmp
