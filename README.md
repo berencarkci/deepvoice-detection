@@ -27,8 +27,8 @@ nedeniyle dengeli doğruluk (BalACC) ve AUC de raporlanır.
 |---|---|---|---|
 | Random Forest | 0.1708 ± 0.0671 | 0.6641 | 0.9066 |
 | SVM | 0.1374 ± 0.0549 | 0.8500 | 0.9355 |
-| CNN (Mel) | 0.0376 ± 0.0414 | 0.9450 | 0.9898 |
-| CNN (Spec) | 0.1244 ± 0.1515 | 0.8916 | 0.9127 |
+| CNN (Mel) | 0.0370 ± 0.0407 | 0.9566 | 0.9904 |
+| CNN (Spec) | 0.0954 ± 0.1022 | 0.9002 | 0.9424 |
 
 EER değerleri 5 katın ortalaması ± standart sapmadır; en iyi başarımı **CNN (Mel)**
 verir. Tüm metrikler (Accuracy, Precision, Recall, F1) için:
@@ -69,10 +69,6 @@ Eğitim scriptleri ayrıca saldırı-gruplu OOF (out-of-fold) tahminlerinden ger
 │   ├── asvspoof_train_spectrogram_cnn.py
 │   ├── asvspoof_cnn_common.py
 │   └── asvspoof_results.py
-├── FoR/                    # Fake-or-Real: öznitelik çıkarımı + ML/CNN eğitimi
-│   ├── extract_*_features.py
-│   ├── train_*.py
-│   └── generate_groups.py
 ├── tools/                  # compare_all_models.py, plot_results.py, test_features.py
 ├── experiments/            # Kapsam dışı yan analizler
 ├── results/                # Sonuç tabloları (.csv/.md)
@@ -97,17 +93,14 @@ pip install -r requirements.txt
 
 ## Veri setleri
 
-Veri setleri depoya dâhil değildir. İndirme betiği doğru klasör yapısını kurar:
+Veri seti depoya dâhil değildir. İndirme betiği doğru klasör yapısını kurar:
 
 ```bash
-python download_datasets.py all        # veya: asvspoof / for
+python download_datasets.py asvspoof
 ```
 
 - **ASVspoof 2019 LA:** [Edinburgh DataShare](https://datashare.ed.ac.uk/handle/10283/3336)
   üzerinden doğrudan indirilir → `Dataset/ASVspoof2019_LA/`.
-- **The Fake-or-Real (FoR):** Kaggle aynası üzerinden indirilir (`kaggle` aracı + API
-  anahtarı gerekir) → `Dataset/for-original/`. Kaynak:
-  [York Üniversitesi BIL](https://bil.eecs.yorku.ca/datasets/).
 
 ## Çalıştırma
 
