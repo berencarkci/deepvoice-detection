@@ -30,11 +30,20 @@ models/*
 #     (eğitim scriptlerinin ürettiği ek figürler depoya alınmaz;
 #      tools/plot_results.py ile üretilir)
 figures/*
+# CSV özet grafikleri (tools/plot_results.py)
 !figures/asvspoof_eer.png
 !figures/asvspoof_metrics.png
 !figures/asvspoof_all_metrics.png
 !figures/asvspoof_radar.png
 !figures/asvspoof_precision_recall.png
+# Eğitim sırasında üretilen OOF grafikleri (saldırı-gruplu)
+!figures/asvspoof_ml_roc_curves.png
+!figures/asvspoof_ml_confusion_matrices.png
+!figures/asvspoof_ml_fold_metrics.png
+!figures/asvspoof_cnn_mel_roc_confusion.png
+!figures/asvspoof_cnn_mel_fold_metrics.png
+!figures/asvspoof_cnn_spec_roc_confusion.png
+!figures/asvspoof_cnn_spec_fold_metrics.png
 
 # --- Python cache / matplotlib config ---
 __pycache__/

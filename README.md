@@ -50,6 +50,12 @@ verir. Tüm metrikler (Accuracy, Precision, Recall, F1) için:
 python tools/plot_results.py
 ```
 
+Eğitim scriptleri ayrıca saldırı-gruplu OOF (out-of-fold) tahminlerinden gerçek
+**ROC eğrileri**, **confusion matrisleri** ve **fold bazlı metrik** grafikleri üretir:
+`asvspoof_ml_roc_curves.png`, `asvspoof_ml_confusion_matrices.png`,
+`asvspoof_ml_fold_metrics.png` ve her CNN için `asvspoof_cnn_{mel,spec}_roc_confusion.png`
++ `..._fold_metrics.png`.
+
 ## Klasör yapısı
 
 ```

@@ -32,9 +32,13 @@ from scipy.optimize import brentq
 from scipy.special import expit
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
-    balanced_accuracy_score, roc_curve, roc_auc_score,
+    balanced_accuracy_score, roc_curve, roc_auc_score, ConfusionMatrixDisplay,
 )
 from sklearn.model_selection import GroupKFold, GroupShuffleSplit
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 from asvspoof_extract_features import build_attack_groups
 from asvspoof_results import record_result
@@ -42,6 +46,8 @@ from asvspoof_results import record_result
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = os.path.join(_BASE_DIR, "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
+FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
+os.makedirs(FIGURES_DIR, exist_ok=True)
 FEATURES_DIR = os.path.join(_BASE_DIR, "features")
 LOGS_DIR = os.path.join(_BASE_DIR, "logs")
 os.makedirs(LOGS_DIR, exist_ok=True)
@@ -352,6 +358,7 @@ def run_experiment(cfg):
     gkf = GroupKFold(n_splits=K_FOLDS)
     fold_metrics = []
     all_idx = np.arange(len(Y))
+    oof_probs = np.zeros(len(Y))                       # out-of-fold (her örnek tam 1 kez test)
 
     for fold, (tv_idx, test_idx) in enumerate(gkf.split(all_idx, Y, groups=G)):
         gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
@@ -366,6 +373,7 @@ def run_experiment(cfg):
         model = train_model(X, Y, train_idx, val_idx, mean, std, ckpt_path=ckpt, **common)
         labels, probs = evaluate(model, X, Y, test_idx, mean, std,
                                  device=device, batch_size=batch_size, pin=pin)
+        oof_probs[test_idx] = probs
         m, _ = _metrics(labels, probs)
         fold_metrics.append(m)
         print(f"Fold {fold+1} → Test ACC: {m['acc']:.4f} | BalACC: {m['balacc']:.4f} | EER: {m['eer']:.4f}")
@@ -394,6 +402,8 @@ def run_experiment(cfg):
         acc=_avg("acc")[0], precision=_avg("precision")[0], f1=_avg("f1")[0],
     )
 
+    _save_plots(cfg, Y, oof_probs, fold_metrics)
+
     # ════════════════ Nihai model (tüm havuz) — arayüz için ════════════════
     if not skip_final:
         _train_final(cfg, X, Y, G, all_idx, common, device)
@@ -402,6 +412,45 @@ def run_experiment(cfg):
             torch.cuda.empty_cache()
 
     return {"kfold": fold_metrics}
+
+
+def _save_plots(cfg, Y, oof_probs, fold_metrics):
+    """Saldırı-gruplu OOF tahminlerinden ROC+confusion ve fold bazlı metrik grafikleri."""
+    try:
+        # ROC + Confusion (OOF)
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
+        fig.suptitle(f"{cfg['title']} — Saldırı-gruplu OOF", fontsize=12.5, fontweight="bold")
+        fpr, tpr, _ = roc_curve(Y, oof_probs)
+        auc_v = roc_auc_score(Y, oof_probs); eer_v = compute_eer(Y, oof_probs)
+        axes[0].plot(fpr, tpr, color="darkorchid", lw=2, label=f"AUC = {auc_v:.3f}")
+        axes[0].plot([0, 1], [0, 1], "k--", lw=1, alpha=0.5)
+        axes[0].set_title(f"ROC (OOF)\nGenel EER ≈ {eer_v:.3f}")
+        axes[0].set_xlabel("False Positive Rate"); axes[0].set_ylabel("True Positive Rate")
+        axes[0].legend(loc="lower right"); axes[0].grid(True, alpha=0.3)
+        preds = (oof_probs > 0.5).astype(int)
+        ConfusionMatrixDisplay.from_predictions(
+            Y.astype(int), preds, display_labels=["Spoof (0)", "Bonafide (1)"],
+            cmap=plt.cm.Purples, ax=axes[1], colorbar=False)
+        axes[1].set_title(f"Confusion (OOF)\nBalACC {balanced_accuracy_score(Y, preds)*100:.2f}%")
+        plt.tight_layout()
+        p1 = os.path.join(FIGURES_DIR, f"asvspoof_{cfg['model_tag']}_roc_confusion.png")
+        plt.savefig(p1, dpi=150, bbox_inches="tight"); plt.close(fig)
+        print(f"  ✔ {os.path.basename(p1)}")
+
+        # Fold bazlı Accuracy / EER
+        fig_b, ax_b = plt.subplots(figsize=(8, 4.5))
+        xs = list(range(1, len(fold_metrics) + 1))
+        ax_b.bar(xs, [fm["acc"] for fm in fold_metrics], color="steelblue", alpha=0.85, label="Accuracy")
+        ax_b.plot(xs, [fm["eer"] for fm in fold_metrics], color="crimson", marker="o", lw=2, label="EER")
+        ax_b.set_xticks(xs); ax_b.set_xlabel("Fold"); ax_b.set_ylim(0, 1.0)
+        ax_b.set_title(f"{cfg['title']} — Fold bazlı Accuracy / EER")
+        ax_b.legend(); ax_b.grid(True, axis="y", alpha=0.3)
+        plt.tight_layout()
+        p2 = os.path.join(FIGURES_DIR, f"asvspoof_{cfg['model_tag']}_fold_metrics.png")
+        plt.savefig(p2, dpi=150, bbox_inches="tight"); plt.close(fig_b)
+        print(f"  ✔ {os.path.basename(p2)}")
+    except Exception as e:
+        print(f"\nUyarı: grafik kaydedilemedi ({type(e).__name__}: {e})")
 
 
 def _train_final(cfg, X, Y, G, all_idx, common, device):

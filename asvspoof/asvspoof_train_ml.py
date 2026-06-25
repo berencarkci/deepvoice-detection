@@ -70,14 +70,20 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GroupKFold
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
-    roc_curve, roc_auc_score, balanced_accuracy_score,
+    roc_curve, roc_auc_score, balanced_accuracy_score, ConfusionMatrixDisplay,
 )
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 from asvspoof_extract_features import build_attack_groups
 from asvspoof_results import record_result
 
 MODELS_DIR = os.path.join(_BASE_DIR, "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
+FIGURES_DIR = os.path.join(_BASE_DIR, "figures")
+os.makedirs(FIGURES_DIR, exist_ok=True)
 K_FOLDS = 5
 SPLITS = ["train", "dev", "eval"]
 PROTO = "attack_kfold"
@@ -161,10 +167,13 @@ def run_attack_kfold():
     ]
 
     gkf = GroupKFold(n_splits=K_FOLDS)
+    results = {}
     for name, make, kind, cap in configs:
         note = "[tüm veri]" if cap is None else f"[eğitim ≤{cap}]"
         print(f"\n{'='*70}\n  {name} — SALDIRI-GRUPLU {K_FOLDS}-FOLD  {note}\n{'='*70}")
         rows = []
+        oof = np.zeros(len(Y))                         # out-of-fold skorlar (her örnek tam 1 kez test)
+        thr_used = 0.5
         for fold, (tr, te) in enumerate(gkf.split(X, Y, groups=G)):
             t0 = time.time()
             fit = tr if cap is None else _stratified_subsample(tr, cap)
@@ -175,6 +184,8 @@ def run_attack_kfold():
                 score, thr = clf.predict_proba(Xte)[:, 1], 0.5
             else:
                 score, thr = clf.decision_function(Xte), 0.0
+            thr_used = thr
+            oof[te] = score
             m = metrics(Y[te], score, thr)
             rows.append(m)
             test_atks = sorted(set(G[te][Y[te] == 0]))
@@ -196,6 +207,70 @@ def run_attack_kfold():
             eer_std=float(np.std([r["eer"] for r in rows])),
             acc=avg("acc"), precision=avg("precision"), f1=avg("f1"),
         )
+        results[name] = {"oof": oof, "thr": thr_used, "rows": rows}
+    return results
+
+
+# ─────────────────────────────────────────────
+# GRAFİKLER (saldırı-gruplu OOF tahminlerinden)
+# ─────────────────────────────────────────────
+def save_ml_plots(results):
+    names = list(results.keys())
+    colors = {"RF": "royalblue", "SVM": "darkorange"}
+    try:
+        # ROC (OOF) — RF + SVM
+        fig, ax = plt.subplots(figsize=(8, 6.5))
+        for name in names:
+            oof = results[name]["oof"]
+            fpr, tpr, _ = roc_curve(Y, oof)
+            ax.plot(fpr, tpr, lw=2, color=colors.get(name, None),
+                    label=f"{name} (AUC={roc_auc_score(Y, oof):.3f}, EER={compute_eer(Y, oof):.3f})")
+        ax.plot([0, 1], [0, 1], "k--", lw=1, alpha=0.5)
+        ax.set_xlabel("False Positive Rate"); ax.set_ylabel("True Positive Rate")
+        ax.set_title("ASVspoof 2019 LA — ROC (saldırı-gruplu OOF)", fontsize=12.5, fontweight="bold")
+        ax.legend(loc="lower right"); ax.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(os.path.join(FIGURES_DIR, "asvspoof_ml_roc_curves.png"), dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print("  ✔ asvspoof_ml_roc_curves.png")
+
+        # Confusion (OOF) — RF + SVM
+        fig, axes = plt.subplots(1, len(names), figsize=(7 * len(names), 6))
+        if len(names) == 1:
+            axes = [axes]
+        for ax, name, cmap in zip(axes, names, ["Blues", "Oranges"]):
+            preds = (results[name]["oof"] > results[name]["thr"]).astype(int)
+            ConfusionMatrixDisplay.from_predictions(
+                Y, preds, display_labels=["Spoof (0)", "Bonafide (1)"],
+                cmap=cmap, ax=ax, colorbar=False)
+            ax.set_title(f"{name}\nACC {accuracy_score(Y, preds)*100:.2f}% | "
+                         f"BalACC {balanced_accuracy_score(Y, preds)*100:.2f}%")
+        fig.suptitle("ASVspoof 2019 LA — Confusion (saldırı-gruplu OOF)",
+                     fontsize=13, fontweight="bold")
+        plt.tight_layout()
+        plt.savefig(os.path.join(FIGURES_DIR, "asvspoof_ml_confusion_matrices.png"),
+                    dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print("  ✔ asvspoof_ml_confusion_matrices.png")
+
+        # Fold bazlı Accuracy / EER
+        fig, axes = plt.subplots(1, len(names), figsize=(6 * len(names), 4.5), squeeze=False)
+        for ax, name in zip(axes[0], names):
+            rows = results[name]["rows"]
+            xs = list(range(1, len(rows) + 1))
+            ax.bar(xs, [r["acc"] for r in rows], color="steelblue", alpha=0.85, label="Accuracy")
+            ax.plot(xs, [r["eer"] for r in rows], color="crimson", marker="o", lw=2, label="EER")
+            ax.set_xticks(xs); ax.set_xlabel("Fold"); ax.set_ylim(0, 1.0)
+            ax.set_title(f"{name} — fold bazlı"); ax.legend(); ax.grid(True, axis="y", alpha=0.3)
+        fig.suptitle("ASVspoof 2019 LA — Fold bazlı Accuracy / EER (ML)",
+                     fontsize=13, fontweight="bold")
+        plt.tight_layout()
+        plt.savefig(os.path.join(FIGURES_DIR, "asvspoof_ml_fold_metrics.png"),
+                    dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print("  ✔ asvspoof_ml_fold_metrics.png")
+    except Exception as e:
+        print(f"\nUyarı: grafik kaydedilemedi ({type(e).__name__}: {e})")
 
 
 # ─────────────────────────────────────────────
@@ -215,14 +290,17 @@ def train_final_models():
     for tag, clf in finals:
         t0 = time.time()
         clf.fit(Xs, Y)
-        joblib.dump(clf, os.path.join(MODELS_DIR, f"asvspoof_{tag}_model.pkl"))
-        joblib.dump(scaler, os.path.join(MODELS_DIR, f"asvspoof_{tag}_scaler.pkl"))
+        # compress=3: özellikle RF .pkl'ini küçültür (depo dosya boyutu sınırı için)
+        joblib.dump(clf, os.path.join(MODELS_DIR, f"asvspoof_{tag}_model.pkl"), compress=3)
+        joblib.dump(scaler, os.path.join(MODELS_DIR, f"asvspoof_{tag}_scaler.pkl"), compress=3)
         print(f"  ✔ models/asvspoof_{tag}_model.pkl (+scaler) ({time.time()-t0:.0f}s)")
 
 
 # ─────────────────────────────────────────────
 # ÇALIŞTIR
 # ─────────────────────────────────────────────
-run_attack_kfold()
+_results = run_attack_kfold()
+print(f"\n{'='*70}\n  GRAFİKLER\n{'='*70}")
+save_ml_plots(_results)
 train_final_models()
 print("\n✓ Tamamlandı. Sonuçlar: results/asvspoof_results.md (attack_kfold)")
