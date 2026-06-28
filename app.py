@@ -333,17 +333,19 @@ with tab1:
 
 with tab2:
     st.header("📊 Model Performans Raporu")
-    st.write("ASVspoof 2019 LA veri setinde, iki değerlendirme protokolünde elde edilen EER sonuçları.")
+    st.write("ASVspoof 2019 LA veri setinde **saldırı-gruplu 5 katlı çapraz doğrulama** "
+             "(her katta görülmemiş saldırı türleriyle test) ile elde edilen sonuçlar.")
     st.markdown("""
-    | Yöntem | Havuzlanmış k-fold | Standart protokol (eval) |
-    |---|---|---|
-    | Random Forest | 0.0902 | 0.1437 |
-    | SVM | 0.0454 | 0.1306 |
-    | CNN (Mel) | 0.0063 | **0.0453** |
-    | CNN (Spec) | 0.0041 | 0.1146 |
+    | Yöntem | EER | Dengeli Doğruluk (BalACC) | AUC |
+    |---|---|---|---|
+    | Random Forest | 0.1708 ± 0.0671 | 0.6641 | 0.9066 |
+    | SVM | 0.1374 ± 0.0549 | 0.8500 | 0.9355 |
+    | **CNN (Mel)** | **0.0370 ± 0.0407** | **0.9566** | **0.9904** |
+    | CNN (Spec) | 0.0954 ± 0.1022 | 0.9002 | 0.9424 |
     """)
-    st.caption("EER düşük = daha iyi. Standart protokol; train ile eğitim, eval ile test. "
-               "GUI standart protokol modellerini kullanır.")
+    st.caption("EER düşük = daha iyi; diğer metrikler yüksek = daha iyi. Değerler 5 katın "
+               "ortalaması ± standart sapmadır. Sınıf dengesizliği (~1:9) nedeniyle dengeli "
+               "doğruluk ve AUC öne çıkarılır. En iyi model: CNN (Mel).")
     st.info("Detaylı tablo ve grafikler: results/asvspoof_results.md / results/asvspoof_results.csv")
 
 with tab3:
